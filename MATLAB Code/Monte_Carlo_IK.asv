@@ -31,14 +31,21 @@ yMinMax = 0.02;
 zStart = 0.26;
 zMinMax = 0.01;
 
-% Rotation of the top plate
+% Rotation of the top plate relative to the spine
 xRStart = 0;
-xRMinMax = 30;
+xRMinMax = 5;
 yRStart = 0;
-yRMinMax = 30;
+yRMinMax = 5;
 zRStart = 0;
-zRMinMax = 30;% twist
+zRMinMax = 40;% twist
 
+% Rotation of the spine relative to the bottom plate
+xRStartLow = 0;
+xRMinMaxLow = 5;
+yRStartLow = 0;
+yRMinMaxLow = 5;
+zRStartLow = 0;
+zRMinMaxLow = 40;% twist
 
 actuatorMinLength = 0.2385;
 actuatorMaxLength = 0.3285;
@@ -81,11 +88,10 @@ while numValid<numberOfRuns
     
     rotationMatrix = rotmat(quat,'frame');
     translationMatrix1 = [0 0 0]; % column vector representing the translation of the top plane
-    translationMatrix2 = [0 0 0.26]; % column vector representing the translation of the top plane
+    translationMatrix2 = [0 0 26]; % column vector representing the translation of the top plane
     transformationMatrix1 = [rotationMatrix transpose(translationMatrix1); 0 0 0 1];
     transformationMatrix2 = [rotationMatrix transpose(translationMatrix2); 0 0 0 1];
-    transformationMatrix = transformationMatrix1*transformationMatrix2;
-
+    
 %     xRand = xStart-xMinMax + (xMinMax*2)*rand();
 %     yRand = yStart-yMinMax + (yMinMax*2)*rand();
 %     zRand = zStart-zMinMax + (zMinMax*2)*rand();
