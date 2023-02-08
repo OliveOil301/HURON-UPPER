@@ -56,7 +56,8 @@ Actuator4TMatrixBottom = [eye(3) transpose(act4bottom); 0 0 0 1];
 
 
 %% Serial communication setup
-serialPort = 0; % A placeholder for the serial port that will be opeded by the user
+device = 0; % A placeholder for the serial device that will be opened by the user
+serialPortWasUpdated = 0;
 
 %% Initial Setup
 
@@ -73,6 +74,17 @@ act1TF = transformationMatrix*Actuator1TMatrixTop;
 act2TF = transformationMatrix*Actuator2TMatrixTop;
 act3TF = transformationMatrix*Actuator3TMatrixTop;
 act4TF = transformationMatrix*Actuator4TMatrixTop;
+
+% Measuring the actuators for sending to the serial device
+act1 = act1TF(1:3,end)-Actuator1TMatrixBottom(1:3,end);
+act2 = act2TF(1:3,end)-Actuator2TMatrixBottom(1:3,end);
+act3 = act3TF(1:3,end)-Actuator3TMatrixBottom(1:3,end);
+act4 = act4TF(1:3,end)-Actuator4TMatrixBottom(1:3,end);
+
+act1Len = sqrt(act1(1)^2 + act1(2)^2 + act1(3)^2);
+act2Len = sqrt(act2(1)^2 + act2(2)^2 + act2(3)^2);
+act3Len = sqrt(act3(1)^2 + act3(2)^2 + act3(3)^2);
+act4Len = sqrt(act4(1)^2 + act4(2)^2 + act4(3)^2);
 
 %Make the figure and clear it, just in case the old figure wasn't closed
 f = uifigure('Name','Inverse Kinematics Generation');
@@ -146,15 +158,23 @@ zeroTorsoButton = uibutton(p, 'Position',[40 20 140 30],'ButtonPushedFcn', ...
     'Text','Reset Torso Position');
 
 %Input for serial port stuff
-serialPortInput = uieditfield(p,'Text','Position',[68 serialStuffBottom+60 110 22],'Placeholder','Com Port (COM1)');
+serialPortdropdown = uidropdown(p,'Items',{'None'},'Position', [68 serialStuffBottom+60 110 22],'Placeholder','Com Port (COM1)');
 serialPortText = uilabel(p,'Position',[3 serialStuffBottom+60 110 22],'Text','Serial Port:');
-serialBaudraeInput = uieditfield(p,'numeric','Position',[68 serialStuffBottom+30 110 22],'value',9600);
+serialBaudratedropdown = uidropdown(p,'Items',{'1200','2400','4800','9600','19200','38400','57600','115200'}, ...
+    'ItemsData',[1200 2400 4800 9600 19200 38400 57600 115200],'Value',115200, ...
+    'Position',[68 serialStuffBottom+30 110 22],'value',9600);
 serialBaudrateText = uilabel(p,'Position',[3 serialStuffBottom+30 110 22],'Text','Baudrate:');
 
-openSerialPortButton = uibutton(p, 'Position',[40 serialStuffBottom 140 22],'ButtonPushedFcn', ...
-    @(btn,event) openSerialButtonPushed(btn,serialPort, serialPortInput.Value, serialBaudraeInput.Value), ...
-    'Text','Open Serial Port');
-
+% Buttons for Serial Stuff
+findAvailablePortsButton = uibutton(p, 'Position',[40 serialStuffBottom 70 22],'ButtonPushedFcn', ...
+    @(btn,event) findAvailablePortsButtonPushed(serialPortdropdown), ...
+    'Text','Find Ports');
+openSerialPortButton = uibutton(p, 'Position',[130 serialStuffBottom 70 22],'ButtonPushedFcn', ...
+    @(btn,event) openSerialButtonPushed(device, serialPortdropdown.Value, serialBaudratedropdown.Value), ...
+    'Text','Open Port');
+sendTorsoPositionButton = uibutton(p, 'Position',[40 serialStuffBottom-30 160 22],'ButtonPushedFcn', ...
+    @(btn,event) sendTorsoPositionButtonPushed(serialPort, act1Len, act2Len, act3Len, act4Len), ...
+    'Text','Send Torso Position', 'Enable','off');
 
 lastRollValue = 0;
 lastPitchValue = 0;
@@ -162,11 +182,23 @@ lastYawValue = 0;
 
 %% GUI
 while true
-    %Updating the roll, pitch, yaw text based on the slider value
     
 
-    pause(0.06)
+    pause(0.06);
+
+
+    % If we have a serial port and it's new
+    if device ~=0 && serialPortWasUpdated == 1
+        % update a text box saying there is a serial connection
+        % enable the button to send data to the torso
+        serialPortWasUpdated = 0;
+        sendTorsoPositionButton.Enable = on;
+        disp("We're connected");
+    end    
     
+
+    % If the angles have changed, update the torso model and the text boxes
+    % saying the angle
     if rollSlider.Value ~= lastRollValue || pitchSlider.Value ~= lastPitchValue || yawSlider.Value ~= lastYawValue
         rollValue.String = num2str(rollSlider.Value,'%.2f');
         pitchValue.String = num2str(pitchSlider.Value,'%.2f');
@@ -279,11 +311,20 @@ while true
 end
 
 
-function zeroButtonPushed(src, rollSlider, pitchSlider, yawSlider)
+function zeroButtonPushed(rollSlider, pitchSlider, yawSlider)
     rollSlider.Value = 0;
     pitchSlider.Value = 0;
     yawSlider.Value = 0;
 end
-function openSerialButtonPushed(src, serialPortPlaceholder, port, baud)
-    serialPortPlaceholder = serialport(port, baud);
+function openSerialButtonPushed(device, port, baud, updated)
+    device = serialport(port, baud, 'Timeout',5);
+    updated = 1;
+end
+
+function sendTorsoPositionButtonPushed(device, act1, act2, act3, act4)
+    write(device, strcat(num2sr(act1), num2sr(act2), num2sr(act3), num2sr(act4)),"string");
+end
+
+function findAvailablePortsButtonPushed(serialPortdropdown)
+    serialPortdropdown.Items = serialportlist("available");
 end
