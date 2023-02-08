@@ -11,10 +11,19 @@ private:
     int pwm;
     int dir1;
     int dir2;
+    long motorTics = 0;
 
 public:
-    long motorTics = 0;
     actuatorCon(int interr, int read, int pwm, int dir1, int dir2);
+
+    void setTics(int s){
+        motorTics = s;
+    }
+
+    int getTics(){
+        return motorTics;
+    }
+
     void getLen();
     void setLen();
 };

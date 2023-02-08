@@ -1,6 +1,16 @@
 #include <Arduino.h>
 #include "actuatorCon.h"
 
+//* MOTOR PIN ASSIGNMENT *//
+/*
+    x = Motor Number
+    MxINTERR = Interrupt Pin for Motor x
+    MxREAD = Read Pin for Motor x
+    MxPWM = PWM Pin for Motor x
+    MxDIR1 = Directional Pin 1 for Motor x
+    MxDIR2 = Directional Pin 2 for Motor x
+*/
+
 // motor 1 pins
 #define M1INTERR 15
 #define M1READ 2
@@ -52,13 +62,13 @@ void readData()
 
 void motor1ISR()
 {
-  if (digitalRead(M1READ))
+  if (digitalRead(M2READ))
   {
-    act1.motorTics++;
+    act1.setTics(act1.getTics()++);
   }
   else
   {
-    act1.motorTics--;
+    act1.setTics(act1.getTics()--);
   }
 }
 
@@ -66,35 +76,35 @@ void motor2ISR()
 {
   if (digitalRead(M2READ))
   {
-    act2.motorTics++;
+    act2.setTics(act2.getTics()++);
   }
   else
   {
-    act2.motorTics--;
+    act2.setTics(act2.getTics()--);
   }
 }
 
 void motor3ISR()
 {
-  if (digitalRead(M3READ))
+    if (digitalRead(M2READ))
   {
-    act3.motorTics++;
+    act3.setTics(act3.getTics()++);
   }
   else
   {
-    act3.motorTics--;
+    act3.setTics(act3.getTics()--);
   }
 }
 
 void motor4ISR()
 {
-  if (digitalRead(M4READ))
+  if (digitalRead(M2READ))
   {
-    act4.motorTics++;
+    act4.setTics(act4.getTics()++);
   }
   else
   {
-    act4.motorTics--;
+    act4.setTics(act4.getTics()--);
   }
 }
 
@@ -102,6 +112,7 @@ void setup()
 {
   Serial.begin(9600);
 
+  //* Interrupt Service Routine initialization *//
   attachInterrupt(digitalPinToInterrupt(M1INTERR), motor1ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M2INTERR), motor2ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
