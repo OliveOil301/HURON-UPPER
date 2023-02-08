@@ -55,9 +55,6 @@ Actuator3TMatrixBottom = [eye(3) transpose(act3bottom); 0 0 0 1];
 Actuator4TMatrixBottom = [eye(3) transpose(act4bottom); 0 0 0 1];
 
 
-%% Serial communication setup
-serialPort = 0; % A placeholder for the serial port that will be opeded by the user
-
 %% Initial Setup
 
 % making all the transformation matricies for the first time and drawing
@@ -152,7 +149,7 @@ serialBaudraeInput = uieditfield(p,'numeric','Position',[68 serialStuffBottom+30
 serialBaudrateText = uilabel(p,'Position',[3 serialStuffBottom+30 110 22],'Text','Baudrate:');
 
 openSerialPortButton = uibutton(p, 'Position',[40 serialStuffBottom 140 22],'ButtonPushedFcn', ...
-    @(btn,event) openSerialButtonPushed(btn,serialPort, serialPortInput.Value, serialBaudraeInput.Value), ...
+    @(btn,event) zeroButtonPushed(btn,rollSlider, pitchSlider, yawSlider), ...
     'Text','Open Serial Port');
 
 
@@ -285,5 +282,5 @@ function zeroButtonPushed(src, rollSlider, pitchSlider, yawSlider)
     yawSlider.Value = 0;
 end
 function openSerialButtonPushed(src, serialPortPlaceholder, port, baud)
-    serialPortPlaceholder = serialport(port, baud);
+    se
 end
