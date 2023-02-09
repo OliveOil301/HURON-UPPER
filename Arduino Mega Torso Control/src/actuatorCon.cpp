@@ -25,3 +25,13 @@ void actuatorCon::getLen()
 void actuatorCon::setLen()
 {
 }
+
+void actuatorCon::setTics(int s)
+{
+    motorTics = s;
+}
+
+int actuatorCon::getTics()
+{
+    return motorTics;
+}
