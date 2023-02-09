@@ -64,11 +64,11 @@ void motor1ISR()
 {
   if (digitalRead(M2READ))
   {
-    act1.setTics(act1.getTics()++);
+    act1.setTics(act1.getTics() + 1);
   }
   else
   {
-    act1.setTics(act1.getTics()--);
+    act1.setTics(act1.getTics() - 1);
   }
 }
 
@@ -76,11 +76,11 @@ void motor2ISR()
 {
   if (digitalRead(M2READ))
   {
-    act2.setTics(act2.getTics()++);
+    act2.setTics(act2.getTics() + 1);
   }
   else
   {
-    act2.setTics(act2.getTics()--);
+    act2.setTics(act2.getTics() - 1);
   }
 }
 
@@ -88,11 +88,11 @@ void motor3ISR()
 {
     if (digitalRead(M2READ))
   {
-    act3.setTics(act3.getTics()++);
+    act3.setTics(act3.getTics() + 1);
   }
   else
   {
-    act3.setTics(act3.getTics()--);
+    act3.setTics(act3.getTics() - 1);
   }
 }
 
@@ -100,11 +100,11 @@ void motor4ISR()
 {
   if (digitalRead(M2READ))
   {
-    act4.setTics(act4.getTics()++);
+    act4.setTics(act4.getTics() + 1);
   }
   else
   {
-    act4.setTics(act4.getTics()--);
+    act4.setTics(act4.getTics() - 1);
   }
 }
 
@@ -121,5 +121,5 @@ void setup()
 
 void loop()
 {
-  void readData();
+  readData();
 }
