@@ -3,15 +3,16 @@ import serial.tools.list_ports
 
 
 def serial_com(direction):
-    esp32_id = "CP2102N USB to UART Bridge Controller"
+    mega_id = "/dev/ttyACM0"
     port = "not found"
 
     list_of_ports = serial.tools.list_ports.comports()
 
     for portInfo in list_of_ports:
-        if portInfo.product == esp32_id:
+        if portInfo.device == mega_id:
             port = portInfo.device
             break
+        # print(portInfo.device)
 
     if port != "not found":
         ser_port = serial.Serial(port)
