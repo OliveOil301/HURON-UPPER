@@ -12,8 +12,8 @@
 */
 
 // motor 1 pins
-#define M1INTERR 15
-#define M1READ 2
+#define M1INTERR 2
+#define M1READ 30
 #define M1PWM 0
 #define M1DIR1 4
 #define M1DIR2 16
@@ -36,28 +36,52 @@
 #define M4DIR1 12
 #define M4DIR2 13
 
-String convertedData = "";
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
 actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
-void readData()
+int *readData()
 {
-  if (Serial.available())
+  int *tempArr = {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1}; // Four ints with length of 3 
+  while (Serial.available())
   {
-    char data = char(Serial.read());
+    int numOfAct = 4;
+    int i = 0;
 
-    if (data != ' ')
+    // converting string to char*
+    // String data = Serial.readStringUntil('\n');
+    // char d2[data.length() + 1];
+
+    // strcpy(d2, data.c_str());
+
+    // char *token = strtok(d2, " ");
+
+    // while (token != NULL)
+    // {
+    //   tempArr[i] = atoi(token);
+    //   token = strtok(NULL, " ");
+    //   i++;
+    // }
+
+    // if (i == numOfAct)
+    // {
+    //   return tempArr;
+    // }
+
+    char inputChar = Serial.read();
+    if (inputChar == "\n")
     {
-      convertedData = convertedData + data;
+      break;
     }
     else
     {
-      Serial.println(convertedData);
-      convertedData = "";
+      tempArr[i] = inputChar;
+      i++;
     }
   }
+
+  return -1;
 }
 
 void motor1ISR()
@@ -86,7 +110,7 @@ void motor2ISR()
 
 void motor3ISR()
 {
-    if (digitalRead(M2READ))
+  if (digitalRead(M2READ))
   {
     act3.setTics(act3.getTics() + 1);
   }
@@ -121,5 +145,10 @@ void setup()
 
 void loop()
 {
-  readData();
+  int q = readData();
+  if (q != -1)
+  {
+
+    Serial.println();
+  }
 }

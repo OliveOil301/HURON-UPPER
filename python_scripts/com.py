@@ -24,4 +24,4 @@ def serial_com(direction):
 
 
 if __name__ == "__main__":
-    serial_com(bytes('002 184 320 ', 'utf-8'))
+    serial_com(bytes('002184320564', 'utf-8'))
