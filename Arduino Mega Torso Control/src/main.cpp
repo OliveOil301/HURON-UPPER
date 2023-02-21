@@ -41,9 +41,11 @@ actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
-int *readData()
+int* readData()
 {
-  int *tempArr = {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1}; // Four ints with length of 3 
+  int tempArr[] = {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1}; // Four "ints" with length of 3
+  int finalArray[] = {-1,-1,-1,-1}; // Four actual ints (3 digits)
+
   while (Serial.available())
   {
     int numOfAct = 4;
@@ -70,18 +72,20 @@ int *readData()
     // }
 
     char inputChar = Serial.read();
-    if (inputChar == "\n")
+    if (inputChar == '\n' || inputChar <= 47 || inputChar >= 58)
     {
       break;
     }
     else
-    {
-      tempArr[i] = inputChar;
+    { // the char is a valid number
+      tempArr[i] = inputChar-47;
       i++;
     }
   }
-
-  return -1;
+  for (int j = 0; j<9; j+=3){
+    finalArray[j/3] = tempArr[j]*100 + tempArr[j+1]*10 + tempArr[j+2];
+  }
+  return finalArray;
 }
 
 void motor1ISR()
@@ -145,10 +149,15 @@ void setup()
 
 void loop()
 {
-  int q = readData();
-  if (q != -1)
-  {
+  int* q;
+  q = readData();
 
-    Serial.println();
+  for (int i=0;i<4;i++){
+      Serial.print(q[i]);
   }
+
+  // if (q != -1)
+  // {
+    
+  // }
 }
