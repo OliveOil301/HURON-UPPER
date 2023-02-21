@@ -77,7 +77,7 @@ int* readData()
       break;
     }
     else
-    { // the char is a valid number
+    { // the char is a valid number :)
       tempArr[i] = inputChar-47;
       i++;
     }
