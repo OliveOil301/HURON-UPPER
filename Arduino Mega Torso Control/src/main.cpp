@@ -41,6 +41,8 @@ actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
+int i = 0;
+
 int* readData()
 {
   int tempArr[] = {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1}; // Four "ints" with length of 3
@@ -48,9 +50,6 @@ int* readData()
 
   while (Serial.available())
   {
-    int numOfAct = 4;
-    int i = 0;
-
     // converting string to char*
     // String data = Serial.readStringUntil('\n');
     // char d2[data.length() + 1];
@@ -74,11 +73,12 @@ int* readData()
     char inputChar = Serial.read();
     if (inputChar == '\n' || inputChar <= 47 || inputChar >= 58)
     {
+      Serial.println(":)");
       break;
     }
     else
-    { // the char is a valid number :)
-      tempArr[i] = inputChar-47;
+    { // the char is a valid number
+      tempArr[i] = inputChar-48;
       i++;
     }
   }
@@ -153,7 +153,7 @@ void loop()
   q = readData();
 
   for (int i=0;i<4;i++){
-      Serial.print(q[i]);
+      Serial.println(q[i]);
   }
 
   // if (q != -1)
