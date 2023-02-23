@@ -43,45 +43,30 @@ actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
 int *readData()
 {
-  int *tempArr = {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1}; // Four ints with length of 3 
+  int i = 0;
+  int tempArr[] = {0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1}; // Four "ints" with length of 3
+  static int finalArray[] = {-1, -1, -1, -1};               // Four actual ints (3 digits)
+
   while (Serial.available())
   {
-    int numOfAct = 4;
-    int i = 0;
-
-    // converting string to char*
-    // String data = Serial.readStringUntil('\n');
-    // char d2[data.length() + 1];
-
-    // strcpy(d2, data.c_str());
-
-    // char *token = strtok(d2, " ");
-
-    // while (token != NULL)
-    // {
-    //   tempArr[i] = atoi(token);
-    //   token = strtok(NULL, " ");
-    //   i++;
-    // }
-
-    // if (i == numOfAct)
-    // {
-    //   return tempArr;
-    // }
-
     char inputChar = Serial.read();
-    if (inputChar == "\n")
-    {
-      break;
-    }
-    else
-    {
-      tempArr[i] = inputChar;
-      i++;
-    }
+    delay(10);
+    // Serial.println(inputChar);
+    tempArr[i] = inputChar - 48;
+    i++;
   }
 
-  return -1;
+  for (int j = 0; j <= 9; j += 3)
+  {
+    finalArray[j / 3] = tempArr[j] * 100 + tempArr[j + 1] * 10 + tempArr[j + 2];
+  }
+
+  // Serial.println(finalArray[0]);
+  // Serial.println(finalArray[1]);
+  // Serial.println(finalArray[2]);
+  // Serial.println(finalArray[3]);
+
+  return finalArray;
 }
 
 void motor1ISR()
@@ -145,10 +130,14 @@ void setup()
 
 void loop()
 {
-  int q = readData();
-  if (q != -1)
-  {
+  int *q;
+  q = readData();
 
-    Serial.println();
+  if (q[0] != -1)
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      Serial.println(q[i]);
+    }
   }
 }

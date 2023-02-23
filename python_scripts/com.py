@@ -15,7 +15,8 @@ def serial_com(direction):
         # print(portInfo.serial_number)
 
     if port != "not found":
-        ser_port = serial.Serial(port)
+        ser_port = serial.Serial(port) 
+        ser_port.baudrate = 9600
         ser_port.write(direction)
         ser_port.close()
     else:
@@ -24,4 +25,4 @@ def serial_com(direction):
 
 
 if __name__ == "__main__":
-    serial_com(bytes('002184320564', 'utf-8'))
+    serial_com(bytes('003184320563', 'utf-8'))
