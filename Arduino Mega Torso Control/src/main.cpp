@@ -41,50 +41,31 @@ actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
-int i = 0;
-
-int* readData()
+int *readData()
 {
-  int tempArr[] = {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1}; // Four "ints" with length of 3
-  int finalArray[] = {-1,-1,-1,-1}; // Four actual ints (3 digits)
+  int i = 0;
+  int tempArr[] = {0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1}; // Four "ints" with length of 3
+  static int finalArray[] = {-1, -1, -1, -1};               // Four actual ints (3 digits)
 
   while (Serial.available())
   {
-    // converting string to char*
-    // String data = Serial.readStringUntil('\n');
-    // char d2[data.length() + 1];
-
-    // strcpy(d2, data.c_str());
-
-    // char *token = strtok(d2, " ");
-
-    // while (token != NULL)
-    // {
-    //   tempArr[i] = atoi(token);
-    //   token = strtok(NULL, " ");
-    //   i++;
-    // }
-
-    // if (i == numOfAct)
-    // {
-    //   return tempArr;
-    // }
-
     char inputChar = Serial.read();
-    if (inputChar == '\n' || inputChar <= 47 || inputChar >= 58)
-    {
-      Serial.println(":)");
-      break;
-    }
-    else
-    { // the char is a valid number
-      tempArr[i] = inputChar-48;
-      i++;
-    }
+    delay(10);
+    // Serial.println(inputChar);
+    tempArr[i] = inputChar - 48;
+    i++;
   }
-  for (int j = 0; j<9; j+=3){
-    finalArray[j/3] = tempArr[j]*100 + tempArr[j+1]*10 + tempArr[j+2];
+
+  for (int j = 0; j <= 9; j += 3)
+  {
+    finalArray[j / 3] = tempArr[j] * 100 + tempArr[j + 1] * 10 + tempArr[j + 2];
   }
+
+  // Serial.println(finalArray[0]);
+  // Serial.println(finalArray[1]);
+  // Serial.println(finalArray[2]);
+  // Serial.println(finalArray[3]);
+
   return finalArray;
 }
 
@@ -149,15 +130,14 @@ void setup()
 
 void loop()
 {
-  int* q;
+  int *q;
   q = readData();
 
-  for (int i=0;i<4;i++){
+  if (q[0] != -1)
+  {
+    for (int i = 0; i < 4; i++)
+    {
       Serial.println(q[i]);
+    }
   }
-
-  // if (q != -1)
-  // {
-    
-  // }
 }
