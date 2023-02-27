@@ -71,7 +71,7 @@ int *readData()
 
 void motor1ISR()
 {
-  if (digitalRead(M2READ))
+  if (digitalRead(M1READ))
   {
     act1.setTics(act1.getTics() + 1);
   }
@@ -95,7 +95,7 @@ void motor2ISR()
 
 void motor3ISR()
 {
-  if (digitalRead(M2READ))
+  if (digitalRead(M3READ))
   {
     act3.setTics(act3.getTics() + 1);
   }
@@ -107,7 +107,7 @@ void motor3ISR()
 
 void motor4ISR()
 {
-  if (digitalRead(M2READ))
+  if (digitalRead(M4READ))
   {
     act4.setTics(act4.getTics() + 1);
   }
@@ -133,11 +133,13 @@ void loop()
   int *q;
   q = readData();
 
-  if (q[0] != -1)
-  {
-    for (int i = 0; i < 4; i++)
-    {
-      Serial.println(q[i]);
-    }
-  }
+  // if (q[0] != -1)
+  // {
+  //   for (int i = 0; i < 4; i++)
+  //   {
+  //     Serial.println(q[i]);
+  //   }
+  // }
+
+
 }

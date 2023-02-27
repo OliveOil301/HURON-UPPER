@@ -18,8 +18,8 @@ public:
 
     void setTics(int s);
     int getTics();
-    void getLen();
-    void setLen();
+    int getLen();
+    void moveAct(int desired);
 };
 
 #endif
