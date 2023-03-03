@@ -311,7 +311,7 @@ while true
 end
 
 
-function zeroButtonPushed(rollSlider, pitchSlider, yawSlider)
+function zeroButtonPushed(btn,rollSlider, pitchSlider, yawSlider)
     rollSlider.Value = 0;
     pitchSlider.Value = 0;
     yawSlider.Value = 0;
