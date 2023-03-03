@@ -12,8 +12,8 @@
 */
 
 // motor 1 pins
-#define M1INTERR 15
-#define M1READ 2
+#define M1INTERR 2
+#define M1READ 30
 #define M1PWM 0
 #define M1DIR1 4
 #define M1DIR2 16
@@ -36,28 +36,37 @@
 #define M4DIR1 12
 #define M4DIR2 13
 
-String convertedData = "";
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
 actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
-void readData()
+int *readData()
 {
-  if (Serial.available())
-  {
-    char data = char(Serial.read());
+  int i = 0;
+  int tempArr[] = {0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1}; // Four "ints" with length of 3
+  static int finalArray[] = {-1, -1, -1, -1};               // Four actual ints (3 digits)
 
-    if (data != ' ')
-    {
-      convertedData = convertedData + data;
-    }
-    else
-    {
-      Serial.println(convertedData);
-      convertedData = "";
-    }
+  while (Serial.available())
+  {
+    char inputChar = Serial.read();
+    delay(10);
+    // Serial.println(inputChar);
+    tempArr[i] = inputChar - 48;
+    i++;
   }
+
+  for (int j = 0; j <= 9; j += 3)
+  {
+    finalArray[j / 3] = tempArr[j] * 100 + tempArr[j + 1] * 10 + tempArr[j + 2];
+  }
+
+  // Serial.println(finalArray[0]);
+  // Serial.println(finalArray[1]);
+  // Serial.println(finalArray[2]);
+  // Serial.println(finalArray[3]);
+
+  return finalArray;
 }
 
 void motor1ISR()
@@ -86,7 +95,7 @@ void motor2ISR()
 
 void motor3ISR()
 {
-    if (digitalRead(M2READ))
+  if (digitalRead(M2READ))
   {
     act3.setTics(act3.getTics() + 1);
   }
@@ -121,5 +130,14 @@ void setup()
 
 void loop()
 {
-  readData();
+  int *q;
+  q = readData();
+
+  if (q[0] != -1)
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      Serial.println(q[i]);
+    }
+  }
 }
