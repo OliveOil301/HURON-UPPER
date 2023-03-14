@@ -1,6 +1,38 @@
 #include <Arduino.h>
 #include "actuatorCon.h"
 
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+//Screen stuff for debugging:
+#define DEBUG_MODE true
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+// The pins for I2C are defined by the Wire-library. 
+// On an arduino UNO:       A4(SDA), A5(SCL)
+// On an arduino MEGA 2560: 20(SDA), 21(SCL)
+// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void printDebugToScreen(String line){
+  if (DEBUG_MODE == true){
+    display.clearDisplay();
+    display.setTextSize(1); // Draw 2X-scale text
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(10, 0);
+    display.println(line);
+    display.display();      // Show initial text
+  }
+}
+
+
 //* MOTOR PIN ASSIGNMENT *//
 /*
     x = Motor Number
@@ -65,9 +97,7 @@ int actuatorGoalPosition[] = {0, 0, 0, 0};//the goal position of the actuators, 
 */
 void clearSerialUntilCommand(){
   char currentChar = Serial.read();
-  while ((currentChar != 'M' || currentChar != 'G') && Serial.read() >= 1){
-    currentChar = Serial.read();
-  }
+  //Just read the first char to clear it from the stack
 }
 
 /** bool readCommand()
@@ -79,20 +109,24 @@ Command readCommand()
 {
   if (Serial.available() < 13){
     //if there are less than 13 characters in the serial port
-    //return an int array that shows there is no command or it isnt a full one yet
+    //return NONE since there isn't a command or isn't one yet
     return NONE;
   } else {
+    printDebugToScreen("Command Recieved (117)");
 
     //If we're here, there are at least 13 characters in the serial bus
     //we now need to check if the first one is a valid command character (M or G)
     char firstChar = Serial.read();
-    if (firstChar != 'G' || firstChar != 'M'){
+    if (firstChar != 'G' && firstChar != 'M'){
+      printDebugToScreen("No valid st char (123)");
+      printDebugToScreen(String(firstChar));
       //If it's not a valid command start character,
       //clear the serial bus until a valid start character is found
       //then return false and the next loop can try to read the command
       clearSerialUntilCommand();
       return NONE;
     } else {
+      printDebugToScreen("Valid st char (130)");
 
       //At this point, we have enough characters and it's a valid 
       //command start character at the beginning
@@ -105,8 +139,10 @@ Command readCommand()
       }
 
       if (firstChar == 'M'){
+        //Serial.println("MOVE");
         return MOVE;
       } else if (firstChar == 'G'){
+        //Serial.println("GET");
         return GET;
       } else {
         return NONE; //This shouldn't happen but it's here for safety
@@ -177,6 +213,10 @@ void motor4ISR()
 
 void setup()
 {
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    for(;;); // Don't proceed, loop forever
+  }
+
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -185,6 +225,8 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M2INTERR), motor2ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
+
+  printDebugToScreen("Setup Complete");
 }
 
 
@@ -196,37 +238,46 @@ Command comm = NONE;
 void loop()
 {
   Command tempComm = readCommand();
-  if(tempComm != NONE){
-    comm = tempComm;
+
+  if(tempComm == NONE){
+
+  } else if(tempComm == MOVE){
+    printDebugToScreen("MOVE");
+  } else {
+    printDebugToScreen("GET");
   }
+
+  // if(tempComm != NONE){
+  //   comm = tempComm;
+  // }
   
-  unsigned long currentTime = millis();
-  switch (comm){
-    case NONE:
-      //
-      digitalWrite(LED_BUILTIN, LOW);
-      break;
-    case MOVE:
-      //
-      if (currentTime >= lastOnTime+1000){
-        digitalWrite(LED_BUILTIN, HIGH);
-        if(currentTime >= lastOnTime+2000){
-          lastOnTime = currentTime;
-        }
-      } else {
-        digitalWrite(LED_BUILTIN, LOW);
-      }
-      break;
-    case GET:
-      //
-      if (currentTime >= lastOnTime+200){
-        digitalWrite(LED_BUILTIN, HIGH);
-        if(currentTime >= lastOnTime+400){
-          lastOnTime = currentTime;
-        }
-      } else {
-        digitalWrite(LED_BUILTIN, LOW);
-      }
-      break;
-  }
+  // unsigned long currentTime = millis();
+  // switch (comm){
+  //   case NONE:
+  //     //
+  //     digitalWrite(LED_BUILTIN, LOW);
+  //     break;
+  //   case MOVE:
+  //     //
+  //     if (currentTime >= lastOnTime+1000){
+  //       digitalWrite(LED_BUILTIN, HIGH);
+  //       if(currentTime >= lastOnTime+2000){
+  //         lastOnTime = currentTime;
+  //       }
+  //     } else {
+  //       digitalWrite(LED_BUILTIN, LOW);
+  //     }
+  //     break;
+  //   case GET:
+  //     //
+  //     if (currentTime >= lastOnTime+200){
+  //       digitalWrite(LED_BUILTIN, HIGH);
+  //       if(currentTime >= lastOnTime+400){
+  //         lastOnTime = currentTime;
+  //       }
+  //     } else {
+  //       digitalWrite(LED_BUILTIN, LOW);
+  //     }
+  //     break;
+  // }
 }
