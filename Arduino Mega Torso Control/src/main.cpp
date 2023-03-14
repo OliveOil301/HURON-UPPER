@@ -41,32 +41,90 @@ actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
 
-int *readData()
+//Communication global variables:
+enum Command{
+  NONE,
+  MOVE,
+  GET
+};
+/** Command Start Characters:
+ * 'M' - MOVE, move to the position indicated in the following digits
+ * 'G' - GET, get data on the current position
+*/
+
+int commandDigits[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//This array holds the digits of the most recent command. If there is no command, it should be all 0
+
+int actuatorGoalPosition[] = {0, 0, 0, 0};//the goal position of the actuators, in millimeters
+//TODO: Change this to the values that result in a home posiiton
+
+/** void clearSerialUntilCommand()
+ * clears each character until a valid command start character is recieved.
+ * This helps to stop a slight communication error from making the whole system crash.
+ * Only the affected command will be lost, not each subsequent one
+*/
+void clearSerialUntilCommand(){
+  char currentChar = Serial.read();
+  while ((currentChar != 'M' || currentChar != 'G') && Serial.read() >= 1){
+    currentChar = Serial.read();
+  }
+}
+
+/** bool readCommand()
+ * @return true if a command was recieved, false otherwise
+ * If a command was recieved, the command type is stored in the global variable "currentCommand"
+ * If a move command was recieved, the actuatorGoalPosition list is updated with the requested position
+*/
+Command readCommand()
 {
-  int i = 0;
-  int tempArr[] = {0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1}; // Four "ints" with length of 3
-  static int finalArray[] = {-1, -1, -1, -1};               // Four actual ints (3 digits)
+  if (Serial.available() < 13){
+    //if there are less than 13 characters in the serial port
+    //return an int array that shows there is no command or it isnt a full one yet
+    return NONE;
+  } else {
 
-  while (Serial.available())
-  {
-    char inputChar = Serial.read();
-    delay(10);
-    // Serial.println(inputChar);
-    tempArr[i] = inputChar - 48;
-    i++;
+    //If we're here, there are at least 13 characters in the serial bus
+    //we now need to check if the first one is a valid command character (M or G)
+    char firstChar = Serial.read();
+    if (firstChar != 'G' || firstChar != 'M'){
+      //If it's not a valid command start character,
+      //clear the serial bus until a valid start character is found
+      //then return false and the next loop can try to read the command
+      clearSerialUntilCommand();
+      return NONE;
+    } else {
+
+      //At this point, we have enough characters and it's a valid 
+      //command start character at the beginning
+      //We'll read through the chars and add them to the global array before returning the 
+      //command type
+      
+      //Read the 12 command digits
+      for (int i = 0; i<12; i++){
+        commandDigits[i] = Serial.read() - 48;
+      }
+
+      if (firstChar == 'M'){
+        return MOVE;
+      } else if (firstChar == 'G'){
+        return GET;
+      } else {
+        return NONE; //This shouldn't happen but it's here for safety
+      }
+    
+    }
   }
+  // for (int j = 0; j <= 9; j += 3)
+  // {
+  //   finalArray[j / 3] = tempArr[j] * 100 + tempArr[j + 1] * 10 + tempArr[j + 2];
+  // }
 
-  for (int j = 0; j <= 9; j += 3)
-  {
-    finalArray[j / 3] = tempArr[j] * 100 + tempArr[j + 1] * 10 + tempArr[j + 2];
-  }
+  // // Serial.println(finalArray[0]);
+  // // Serial.println(finalArray[1]);
+  // // Serial.println(finalArray[2]);
+  // // Serial.println(finalArray[3]);
 
-  // Serial.println(finalArray[0]);
-  // Serial.println(finalArray[1]);
-  // Serial.println(finalArray[2]);
-  // Serial.println(finalArray[3]);
-
-  return finalArray;
+  // return finalArray;
 }
 
 void motor1ISR()
@@ -120,6 +178,7 @@ void motor4ISR()
 void setup()
 {
   Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   //* Interrupt Service Routine initialization *//
   attachInterrupt(digitalPinToInterrupt(M1INTERR), motor1ISR, RISING);
@@ -128,16 +187,46 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 }
 
+
+int state = 0;
+unsigned long lastOnTime = 0;
+
+Command comm = NONE;
+
 void loop()
 {
-  int *q;
-  q = readData();
-
-  if (q[0] != -1)
-  {
-    for (int i = 0; i < 4; i++)
-    {
-      Serial.println(q[i]);
-    }
+  Command tempComm = readCommand();
+  if(tempComm != NONE){
+    comm = tempComm;
+  }
+  
+  unsigned long currentTime = millis();
+  switch (comm){
+    case NONE:
+      //
+      digitalWrite(LED_BUILTIN, LOW);
+      break;
+    case MOVE:
+      //
+      if (currentTime >= lastOnTime+1000){
+        digitalWrite(LED_BUILTIN, HIGH);
+        if(currentTime >= lastOnTime+2000){
+          lastOnTime = currentTime;
+        }
+      } else {
+        digitalWrite(LED_BUILTIN, LOW);
+      }
+      break;
+    case GET:
+      //
+      if (currentTime >= lastOnTime+200){
+        digitalWrite(LED_BUILTIN, HIGH);
+        if(currentTime >= lastOnTime+400){
+          lastOnTime = currentTime;
+        }
+      } else {
+        digitalWrite(LED_BUILTIN, LOW);
+      }
+      break;
   }
 }
