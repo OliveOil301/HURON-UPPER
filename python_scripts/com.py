@@ -17,7 +17,7 @@ def serial_com(direction):
 
     if port != "not found":
         ser_port = serial.Serial('COM13', baudrate=9600, timeout=0) 
-        time.sleep(2)
+        time.sleep(4)
         ser_port.write(direction)
         ser_port.close()
         #print(ser_port.read_all())
@@ -28,4 +28,4 @@ def serial_com(direction):
 
 
 if __name__ == "__main__":
-    serial_com(str.encode('M003184320563'))
+    serial_com(bytes('M003184320563', 'utf-8'))

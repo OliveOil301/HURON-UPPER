@@ -96,7 +96,10 @@ int actuatorGoalPosition[] = {0, 0, 0, 0};//the goal position of the actuators, 
  * Only the affected command will be lost, not each subsequent one
 */
 void clearSerialUntilCommand(){
-  char currentChar = Serial.read();
+  char nextChar = Serial.peek();
+  while (nextChar != 'M' && nextChar != 'G' && Serial.available() > 0){
+    Serial.read();
+  }
   //Just read the first char to clear it from the stack
 }
 
@@ -216,6 +219,7 @@ void setup()
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     for(;;); // Don't proceed, loop forever
   }
+  printDebugToScreen("Setup Starting");
 
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);

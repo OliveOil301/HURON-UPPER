@@ -59,7 +59,6 @@ Actuator4TMatrixBottom = [eye(3) transpose(act4bottom); 0 0 0 1];
 global device;
 device = 0; % A placeholder for the serial device that will be opened by the user
 
-global sendCommandFlag;
 sendCommandFlag = 0;
 
 %% Initial Setup
@@ -173,7 +172,7 @@ findAvailablePortsButton = uibutton(p, 'Position',[40 serialStuffBottom 70 22],'
     @(btn,event) findAvailablePortsButtonPushed(serialPortdropdown), ...
     'Text','Find Ports');
 sendTorsoPositionButton = uibutton(p, 'Position',[40 serialStuffBottom-30 160 22],'ButtonPushedFcn', ...
-    @(btn,event) sendTorsoPositionButtonPushed(), ...
+    @(btn,event) sendTorsoPositionButtonPushed(sendCommandFlag), ...
     'Text','Send Torso Position', 'Enable','off');
 openSerialPortButton = uibutton(p, 'Position',[130 serialStuffBottom 70 22],'ButtonPushedFcn', ...
     @(btn,event) openSerialButtonPushed(serialPortdropdown.Value, serialBaudratedropdown.Value, sendTorsoPositionButton), ...
@@ -191,9 +190,8 @@ while true
     pause(0.06);
 
     if sendCommandFlag == 1
-        stringToSend = convertStringsToChars(strcat("M",num2str(uint16(act1Len*1000)), num2str(uint16(act2Len*1000)), num2str(uint16(act3Len*1000)), num2str(uint16(act4Len*1000))));
-        
-        write(device, stringToSend, "char");
+        stringToSend = strcat("M",num2str(uint16(act1*100)), num2str(uint16(act2*100)), num2str(uint16(act3*100)), num2str(uint16(act4*100)));
+        write(device, stringToSend, "string");
         sendCommandFlag = 0;
         disp("Command Sent");
     end
@@ -325,9 +323,8 @@ function openSerialButtonPushed(port, baud, sendButton)
     sendButton.Enable = 'on';
 end
 
-function sendTorsoPositionButtonPushed()
-    global sendCommandFlag;
-    sendCommandFlag = 1;
+function sendTorsoPositionButtonPushed(flag)
+    flag = 1;
     %convertStringsToChars
 end
 
