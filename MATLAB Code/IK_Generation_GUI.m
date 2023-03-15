@@ -170,22 +170,27 @@ zeroTorsoButton = uibutton(p, 'Position',[40 20 140 30],'ButtonPushedFcn', ...
 
 %Input for serial port stuff
 serialPortdropdown = uidropdown(p,'Items',{'None'},'Position', [68 serialStuffBottom+60 110 22],'Placeholder','Com Port (COM1)');
-serialPortText = uilabel(p,'Position',[3 serialStuffBottom+60 110 22],'Text','Serial Port:');
+serialPortText = uilabel(p,'Position',[5 serialStuffBottom+60 110 22],'Text','Serial Port:');
 serialBaudratedropdown = uidropdown(p,'Items',{'1200','2400','4800','9600','19200','38400','57600','115200'}, ...
     'ItemsData',[1200 2400 4800 9600 19200 38400 57600 115200],'Value',115200, ...
     'Position',[68 serialStuffBottom+30 110 22],'value',9600);
-serialBaudrateText = uilabel(p,'Position',[3 serialStuffBottom+30 110 22],'Text','Baudrate:');
+serialBaudrateText = uilabel(p,'Position',[12 serialStuffBottom+30 110 22],'Text','Baudrate:');
 
 % Buttons for Serial Stuff
-findAvailablePortsButton = uibutton(p, 'Position',[40 serialStuffBottom 70 22],'ButtonPushedFcn', ...
+findAvailablePortsButton = uibutton(p, 'Position',[7 serialStuffBottom 70 22],'ButtonPushedFcn', ...
     @(btn,event) findAvailablePortsButtonPushed(serialPortdropdown), ...
     'Text','Find Ports');
 sendTorsoPositionButton = uibutton(p, 'Position',[40 serialStuffBottom-30 160 22],'ButtonPushedFcn', ...
     @(btn,event) sendTorsoPositionButtonPushed(), ...
     'Text','Send Torso Position', 'Enable','off');
-openSerialPortButton = uibutton(p, 'Position',[130 serialStuffBottom 70 22],'ButtonPushedFcn', ...
-    @(btn,event) openSerialButtonPushed(serialPortdropdown.Value, serialBaudratedropdown.Value, sendTorsoPositionButton), ...
+global closeSerialPortButton;
+closeSerialPortButton;
+openSerialPortButton = uibutton(p, 'Position',[84 serialStuffBottom 70 22],'ButtonPushedFcn', ...
+    @(btn,event) openSerialButtonPushed(btn, serialPortdropdown.Value, serialBaudratedropdown.Value, sendTorsoPositionButton), ...
     'Text','Open Port');
+closeSerialPortButton = uibutton(p, 'Position',[161 serialStuffBottom 70 22],'ButtonPushedFcn', ...
+    @(btn,event) closeSerialButtonPushed(btn, openSerialPortButton, sendTorsoPositionButton), ...
+    'Text','Close Port', 'Enable','off');
 
 lastRollValue = 0;
 lastPitchValue = 0;
@@ -327,10 +332,13 @@ function zeroButtonPushed(btn,rollSlider, pitchSlider, yawSlider)
     yawSlider.Value = 0;
 end
 
-function openSerialButtonPushed(port, baud, sendButton)
+function openSerialButtonPushed(btn, port, baud, sendButton)
     global device
     device = serialport(port, baud, 'Timeout',5);
+    btn.Enable = 'off';
     sendButton.Enable = 'on';
+    global closeSerialPortButton;
+    closeSerialPortButton.Enable = 'on';
 end
 
 function sendTorsoPositionButtonPushed()
@@ -341,6 +349,14 @@ end
 
 function findAvailablePortsButtonPushed(serialPortdropdown)
     serialPortdropdown.Items = serialportlist("all");
+end
+
+function closeSerialButtonPushed(btn, openButton, sendButton)
+    global device
+    device = []; % delete the device and close the port
+    btn.Enable = 'off'; %disable this button since the port is now closed
+    openButton.Enable = 'on'; % enable the openButton since we can now open a new port
+    sendButton.Enable = 'off'; % Disable the send position button since the port is now closed
 end
 
 
