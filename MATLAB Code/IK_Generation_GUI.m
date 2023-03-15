@@ -30,6 +30,14 @@ serialStuffBottom = 250;
 
 % Locations of the top of the actuators relative to where the spine meets
 % the top plate
+%
+% Top view of actuator positions:
+%       _____________
+%      /    spine    \
+%     |  4         3  |
+%      \             /
+%       \  1     2  /
+%
 act1Top = [-0.02 -0.12 0]; % location of the first actuator top relative to top plate
 act2Top = [0.02 -0.12 0];
 act3Top = [0.1 -0.02 0];

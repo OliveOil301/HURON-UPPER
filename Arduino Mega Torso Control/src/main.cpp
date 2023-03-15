@@ -21,16 +21,7 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-void printDebugToScreen(String line){
-  if (DEBUG_MODE == true){
-    display.clearDisplay();
-    display.setTextSize(1); // Draw 2X-scale text
-    display.setTextColor(SSD1306_WHITE);
-    display.setCursor(10, 0);
-    display.println(line);
-    display.display();      // Show initial text
-  }
-}
+
 
 
 //* MOTOR PIN ASSIGNMENT *//
@@ -103,6 +94,42 @@ void clearSerialUntilCommand(){
   //Just read the first char to clear it from the stack
 }
 
+void setGoalActuatorLengths(){
+  //Sets the goals for the actuator lengths based on the current command stored
+  //This is meant to be used after a move command is used.
+  for (int j = 0; j <= 9; j += 3)
+  {
+    actuatorGoalPosition[j / 3] = commandDigits[j] * 100 + commandDigits[j + 1] * 10 + commandDigits[j + 2];
+  }
+
+}
+
+void printDebugToScreen(String line){
+  if (DEBUG_MODE == true){
+    display.clearDisplay();
+    display.setTextSize(1); 
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(10, 0);
+    display.println(line);
+    display.display();     
+  }
+}
+
+void printActuatorGoals(){
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(10, 0);
+  display.print(String(actuatorGoalPosition[0]));
+  display.print(", ");
+  display.print(String(actuatorGoalPosition[1]));
+  display.print(", ");
+  display.print(String(actuatorGoalPosition[2]));
+  display.print(", ");
+  display.print(String(actuatorGoalPosition[3]));
+  display.display(); 
+}
+
 /** bool readCommand()
  * @return true if a command was recieved, false otherwise
  * If a command was recieved, the command type is stored in the global variable "currentCommand"
@@ -143,6 +170,7 @@ Command readCommand()
 
       if (firstChar == 'M'){
         //Serial.println("MOVE");
+        setGoalActuatorLengths();
         return MOVE;
       } else if (firstChar == 'G'){
         //Serial.println("GET");
@@ -247,6 +275,7 @@ void loop()
 
   } else if(tempComm == MOVE){
     printDebugToScreen("MOVE");
+    printActuatorGoals();
   } else {
     printDebugToScreen("GET");
   }
