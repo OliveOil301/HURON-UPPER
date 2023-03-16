@@ -35,29 +35,33 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 */
 
 // motor 1 pins
-#define M1INTERR 2
-#define M1READ 30
-#define M1PWM 0
-#define M1DIR1 4
-#define M1DIR2 16
+#define M1INTERR 3
+#define M1READ 40
+#define M1PWM 13
+#define M1DIR1 28
+#define M1DIR2 29
+#define M1POT A1
 // motor 2 pins
-#define M2INTERR 17
-#define M2READ 5
-#define M2PWM 18
-#define M2DIR1 19
-#define M2DIR2 21
+#define M2INTERR 2
+#define M2READ 41
+#define M2PWM 12
+#define M2DIR1 30
+#define M2DIR2 31
+#define M2POT A2
 // motor 3 pins
-#define M3INTERR 34
-#define M3READ 35
-#define M3PWM 32
-#define M3DIR1 33
-#define M3DIR2 25
+#define M3INTERR 18
+#define M3READ 42
+#define M3PWM 11
+#define M3DIR1 32
+#define M3DIR2 33
+#define M3POT A3
 // motor 4 pins
-#define M4INTERR 26
-#define M4READ 27
-#define M4PWM 11
-#define M4DIR1 12
-#define M4DIR2 13
+#define M4INTERR 19
+#define M4READ 43
+#define M4PWM 10
+#define M4DIR1 34
+#define M4DIR2 35
+#define M4POT A4
 
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
 actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
@@ -78,8 +82,10 @@ enum Command{
 int commandDigits[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //This array holds the digits of the most recent command. If there is no command, it should be all 0
 
-int actuatorGoalPosition[] = {0, 0, 0, 0};//the goal position of the actuators, in millimeters
-//TODO: Change this to the values that result in a home posiiton
+int actuatorPositionGoals[10][4];//the goal position of the actuators, in millimeters
+int currentPositionGoalIndex = 0; //The index of the above array for the current position goal.
+int newPositionGoalIndex = 1; // This stores the index for the next goal to be set to. This is used to keep track of the new goals in the system 
+//TODO: Add a goal in setup() that adds a goal for the home position.
 
 /** void clearSerialUntilCommand()
  * clears each character until a valid command start character is recieved.
@@ -94,16 +100,6 @@ void clearSerialUntilCommand(){
   //Just read the first char to clear it from the stack
 }
 
-void setGoalActuatorLengths(){
-  //Sets the goals for the actuator lengths based on the current command stored
-  //This is meant to be used after a move command is used.
-  for (int j = 0; j <= 9; j += 3)
-  {
-    actuatorGoalPosition[j / 3] = commandDigits[j] * 100 + commandDigits[j + 1] * 10 + commandDigits[j + 2];
-  }
-
-}
-
 void printDebugToScreen(String line){
   if (DEBUG_MODE == true){
     display.clearDisplay();
@@ -116,18 +112,32 @@ void printDebugToScreen(String line){
 }
 
 void printActuatorGoals(){
+  // Only works on newPositionGoalIndex from 1-9, not 0
+  // Can be fixed but would make it a bit more complicated. 
+  // Not worth it since this is jsut for testing
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(10, 0);
-  display.print(String(actuatorGoalPosition[0]));
+  display.print(String(actuatorPositionGoals[newPositionGoalIndex-1][0]));
   display.print(", ");
-  display.print(String(actuatorGoalPosition[1]));
+  display.print(String(actuatorPositionGoals[newPositionGoalIndex-1][1]));
   display.print(", ");
-  display.print(String(actuatorGoalPosition[2]));
+  display.print(String(actuatorPositionGoals[newPositionGoalIndex-1][2]));
   display.print(", ");
-  display.print(String(actuatorGoalPosition[3]));
+  display.print(String(actuatorPositionGoals[newPositionGoalIndex-1][3]));
   display.display(); 
+
+}
+
+/** void setHomePositionGoal()
+ * sets the first position goal to be the home position of the robot
+*/
+void setHomePositionGoal(){
+  actuatorPositionGoals[0][0] = 276;
+  actuatorPositionGoals[0][1] = 276;
+  actuatorPositionGoals[0][2] = 266;
+  actuatorPositionGoals[0][3] = 266;
 }
 
 /** bool readCommand()
@@ -170,7 +180,6 @@ Command readCommand()
 
       if (firstChar == 'M'){
         //Serial.println("MOVE");
-        setGoalActuatorLengths();
         return MOVE;
       } else if (firstChar == 'G'){
         //Serial.println("GET");
@@ -178,21 +187,48 @@ Command readCommand()
       } else {
         return NONE; //This shouldn't happen but it's here for safety
       }
-    
     }
   }
-  // for (int j = 0; j <= 9; j += 3)
-  // {
-  //   finalArray[j / 3] = tempArr[j] * 100 + tempArr[j + 1] * 10 + tempArr[j + 2];
-  // }
-
-  // // Serial.println(finalArray[0]);
-  // // Serial.println(finalArray[1]);
-  // // Serial.println(finalArray[2]);
-  // // Serial.println(finalArray[3]);
-
-  // return finalArray;
 }
+
+/** bool addMoveGoal(int act1, int act2, int act3, int act4)
+ * @param act1: an integer representing the goal for the first actuator
+ * @param act2: an integer representing the goal for the second actuator
+ * @param act3: an integer representing the goal for the third actuator
+ * @param act4: an integer representing the goal for the fourth actuator
+ * @returns: a boolean representing whether the goal was added to the list. 
+ *      If there are already 10 goals that have not yet been completed, the
+ *      goal cannot be added to the list and false will be returned. 
+ *      Otherwise, true is returned
+*/
+bool addMoveGoal(int* commandNumbers){
+  if(newPositionGoalIndex == currentPositionGoalIndex){
+    //If we will overwrite the oldest goal, return false and disregard the movement goal
+    return false;
+  } else { //If we are good to add the goal to the array:
+
+    //Parse the commandNumbers to get the actual actuator lengths
+    int actuatorPositions[4] = {0, 0, 0, 0};
+    for (int j = 0; j <= 9; j += 3)
+    {
+      actuatorPositions[j / 3] = commandNumbers[j] * 100 + commandNumbers[j + 1] * 10 + commandNumbers[j + 2];
+    }
+
+    //add the new goal to the correct position in the array
+    actuatorPositionGoals[newPositionGoalIndex][0] = actuatorPositions[0];
+    actuatorPositionGoals[newPositionGoalIndex][1] = actuatorPositions[1];
+    actuatorPositionGoals[newPositionGoalIndex][2] = actuatorPositions[2];
+    actuatorPositionGoals[newPositionGoalIndex][3] = actuatorPositions[3];
+
+    //index the position while keepping it constrained from 0 to 9 with modulo
+    newPositionGoalIndex = (newPositionGoalIndex+1)%10;
+    
+    return true;// Now return true since everything worked out correctly
+  }
+}
+
+
+//*Motor functions:----------------
 
 void motor1ISR()
 {
@@ -258,14 +294,13 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 
+  setHomePositionGoal();
+
+
   printDebugToScreen("Setup Complete");
 }
 
 
-int state = 0;
-unsigned long lastOnTime = 0;
-
-Command comm = NONE;
 
 void loop()
 {
@@ -275,7 +310,9 @@ void loop()
 
   } else if(tempComm == MOVE){
     printDebugToScreen("MOVE");
-    printActuatorGoals();
+    if(addMoveGoal(commandDigits)){
+      printActuatorGoals();
+    }
   } else {
     printDebugToScreen("GET");
   }
