@@ -30,18 +30,26 @@ void actuatorCon::moveAct(int desiredLen)
 {
     int error = this->getLen() - desiredLen;
 
-    if (error >= 0)
+    if (error <= 0)
     {
+        Serial.println("ERROR 1");
+        Serial.println(error);
         digitalWrite(this->dir1, HIGH);
         digitalWrite(this->dir2, LOW);
     }
     else
     {
+        Serial.println("ERROR 2");
+        Serial.println(error);
         digitalWrite(this->dir1, LOW);
         digitalWrite(this->dir2, HIGH);
     }
 
-    error = map(abs(error), 243, 323, 0, 255);
+    // PROBLEM CHILD    vvv
+    error = map(abs(error), 0, 80, 0, 255);
+    // PROBLEM CHILD    ^^^ 
+    
+    Serial.println(error);
     analogWrite(this->pwm, error);
 }
 
