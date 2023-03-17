@@ -69,15 +69,16 @@ int *readData()
   return finalArray;
 }
 
+// I reversed this ISR in order to get it working, but this might be because I wired it incorrectly
 void motor1ISR()
 {
   if (digitalRead(M1READ))
   {
-    act1.setTics(act1.getTics() + 1);
+    act1.setTics(act1.getTics() - 1);
   }
   else
   {
-    act1.setTics(act1.getTics() - 1);
+    act1.setTics(act1.getTics() + 1);
   }
 }
 
@@ -126,6 +127,11 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M2INTERR), motor2ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
+
+  // Each actuator DESPERATELY needs to have a starting point of reference
+  // For simplicity's sake for now, I just put it at the midpoint. This can be tweaked when the robot is assembled.
+  act1.setTics(22821);
+  Serial.println(act1.getLen());
 }
 
 void loop()
@@ -133,7 +139,7 @@ void loop()
   int *q;
   q = readData();
 
-  // act1.moveAct(283);
+  act1.moveAct(303);
 
   // if (q[0] != -1)
   // {

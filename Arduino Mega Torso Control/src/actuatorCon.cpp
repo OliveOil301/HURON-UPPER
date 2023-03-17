@@ -34,23 +34,26 @@ void actuatorCon::moveAct(int desiredLen)
     {
         Serial.println("ERROR 1");
         Serial.println(error);
-        digitalWrite(this->dir1, HIGH);
-        digitalWrite(this->dir2, LOW);
+        digitalWrite(this->dir1, LOW);
+        digitalWrite(this->dir2, HIGH);
     }
     else
     {
         Serial.println("ERROR 2");
         Serial.println(error);
-        digitalWrite(this->dir1, LOW);
-        digitalWrite(this->dir2, HIGH);
+        digitalWrite(this->dir1, HIGH);
+        digitalWrite(this->dir2, LOW);
     }
+
+    // Min Length = 243
+    // Max Length = 323
 
     // PROBLEM CHILD    vvv
     error = map(abs(error), 0, 80, 0, 255);
     // PROBLEM CHILD    ^^^ 
     
     Serial.println(error);
-    analogWrite(this->pwm, error);
+    analogWrite(this->pwm, error*.4);
 }
 
 void actuatorCon::setTics(int s)
