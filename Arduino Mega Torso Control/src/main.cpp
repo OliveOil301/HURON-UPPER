@@ -14,7 +14,7 @@
 // motor 1 pins
 #define M1INTERR 2
 #define M1READ 30
-#define M1PWM 0
+#define M1PWM 13
 #define M1DIR1 4
 #define M1DIR2 16
 // motor 2 pins
@@ -34,7 +34,7 @@
 #define M4READ 27
 #define M4PWM 11
 #define M4DIR1 12
-#define M4DIR2 13
+#define M4DIR2 0
 
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
 actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
@@ -132,6 +132,9 @@ void setup()
   // For simplicity's sake for now, I just put it at the midpoint. This can be tweaked when the robot is assembled.
   act1.setTics(22821);
   Serial.println(act1.getLen());
+
+
+
 }
 
 void loop()
@@ -139,7 +142,7 @@ void loop()
   int *q;
   q = readData();
 
-  act1.moveAct(303);
+  act1.moveAct(263);
 
   // if (q[0] != -1)
   // {

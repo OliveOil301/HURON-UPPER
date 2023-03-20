@@ -2,6 +2,14 @@
 
 int isrRead;
 int motorTics;
+float prevError = 0;
+float Kp = 1;   
+float Ki = 0.05;
+float Kd = 0;
+float sumError = 0;
+int errorBound = 80;
+bool runOnce = 0;
+float origError;
 
 actuatorCon::actuatorCon(int interr, int read, int pwm, int dir1, int dir2)
 {
@@ -28,32 +36,50 @@ int actuatorCon::getLen()
 
 void actuatorCon::moveAct(int desiredLen)
 {
-    int error = this->getLen() - desiredLen;
+    if (runOnce == 0){
+        origError = this->getLen() - desiredLen;
+        runOnce = 1;
+    }
 
-    if (error <= 0)
+    float error = this->getLen() - desiredLen;
+    float currError = error;
+    float derError = currError - prevError;
+    sumError += error;
+
+    if(sumError > errorBound) sumError = errorBound;
+    if(sumError < -errorBound) sumError = -errorBound;
+
+    if (error <= -1)
     {
-        Serial.println("ERROR 1");
-        Serial.println(error);
         digitalWrite(this->dir1, LOW);
         digitalWrite(this->dir2, HIGH);
     }
-    else
+    else if (error >= 1)
     {
-        Serial.println("ERROR 2");
-        Serial.println(error);
         digitalWrite(this->dir1, HIGH);
         digitalWrite(this->dir2, LOW);
     }
+    else 
+    {
+        digitalWrite(this->dir1, LOW);
+        digitalWrite(this->dir2, LOW);
+    }
 
-    // Min Length = 243
-    // Max Length = 323
+    error = Kp * currError;
+    //+ Ki * sumError + Kd * derError;
 
-    // PROBLEM CHILD    vvv
-    error = map(abs(error), 0, 80, 0, 255);
-    // PROBLEM CHILD    ^^^ 
-    
-    Serial.println(error);
-    analogWrite(this->pwm, error*.4);
+    // Min Length = 243 mm
+    // Max Length = 323 mm 
+    // Difference of 80 mm
+
+    int finalError = map(abs(error), 0, abs(origError), 160, 255);
+
+    Serial.println(origError);
+    Serial.println(finalError);
+
+    analogWrite(this->pwm, finalError);
+
+    prevError = error;
 }
 
 void actuatorCon::setTics(int s)
