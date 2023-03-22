@@ -142,8 +142,9 @@ void loop()
   int *q;
   q = readData();
 
+  act1.moveAct(278);
   act2.moveAct(303);
-  act1.moveAct(303);
+
 
 
   // if (q[0] != -1)
