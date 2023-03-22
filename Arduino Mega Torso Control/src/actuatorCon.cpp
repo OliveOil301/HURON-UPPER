@@ -4,7 +4,7 @@ int isrRead;
 int motorTics;
 float prevError = 0;
 float Kp = 1;   
-float Ki = 0.05;
+float Ki = 0;
 float Kd = 0;
 float sumError = 0;
 int errorBound = 80;
@@ -36,10 +36,6 @@ int actuatorCon::getLen()
 
 void actuatorCon::moveAct(int desiredLen)
 {
-    if (runOnce == 0){
-        origError = this->getLen() - desiredLen;
-        runOnce = 1;
-    }
 
     float error = this->getLen() - desiredLen;
     float currError = error;
@@ -65,8 +61,12 @@ void actuatorCon::moveAct(int desiredLen)
         digitalWrite(this->dir2, LOW);
     }
 
-    error = Kp * currError;
-    //+ Ki * sumError + Kd * derError;
+    error = Kp * currError + Ki * sumError + Kd * derError;
+
+    if (runOnce == 0){
+        origError = error;
+        runOnce = 1;
+    }
 
     // Min Length = 243 mm
     // Max Length = 323 mm 

@@ -15,14 +15,14 @@
 #define M1INTERR 2
 #define M1READ 30
 #define M1PWM 13
-#define M1DIR1 4
+#define M1DIR1 15
 #define M1DIR2 16
 // motor 2 pins
-#define M2INTERR 17
-#define M2READ 5
-#define M2PWM 18
-#define M2DIR1 19
-#define M2DIR2 21
+#define M2INTERR 3
+#define M2READ 28
+#define M2PWM 12
+#define M2DIR1 17
+#define M2DIR2 18
 // motor 3 pins
 #define M3INTERR 34
 #define M3READ 35
@@ -33,7 +33,7 @@
 #define M4INTERR 26
 #define M4READ 27
 #define M4PWM 11
-#define M4DIR1 12
+#define M4DIR1 10
 #define M4DIR2 0
 
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
@@ -86,11 +86,11 @@ void motor2ISR()
 {
   if (digitalRead(M2READ))
   {
-    act2.setTics(act2.getTics() + 1);
+    act2.setTics(act2.getTics() - 1);
   }
   else
   {
-    act2.setTics(act2.getTics() - 1);
+    act2.setTics(act2.getTics() + 1);
   }
 }
 
@@ -131,7 +131,7 @@ void setup()
   // Each actuator DESPERATELY needs to have a starting point of reference
   // For simplicity's sake for now, I just put it at the midpoint. This can be tweaked when the robot is assembled.
   act1.setTics(22821);
-  Serial.println(act1.getLen());
+  act2.setTics(22821);
 
 
 
@@ -142,7 +142,9 @@ void loop()
   int *q;
   q = readData();
 
-  act1.moveAct(263);
+  act2.moveAct(303);
+  act1.moveAct(303);
+
 
   // if (q[0] != -1)
   // {
