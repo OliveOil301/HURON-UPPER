@@ -12,29 +12,33 @@
 */
 
 // motor 1 pins
-#define M1INTERR 2
-#define M1READ 30
+#define M1INTERR 3
+#define M1READ 40
 #define M1PWM 13
-#define M1DIR1 15
-#define M1DIR2 16
+#define M1DIR1 28
+#define M1DIR2 29
+#define M1POT A1
 // motor 2 pins
-#define M2INTERR 3
-#define M2READ 28
+#define M2INTERR 2
+#define M2READ 41
 #define M2PWM 12
-#define M2DIR1 17
-#define M2DIR2 18
+#define M2DIR1 30
+#define M2DIR2 31
+#define M2POT A2
 // motor 3 pins
-#define M3INTERR 34
-#define M3READ 35
-#define M3PWM 32
-#define M3DIR1 33
-#define M3DIR2 25
+#define M3INTERR 18
+#define M3READ 42
+#define M3PWM 11
+#define M3DIR1 32
+#define M3DIR2 33
+#define M3POT A3
 // motor 4 pins
-#define M4INTERR 26
-#define M4READ 27
-#define M4PWM 11
-#define M4DIR1 10
-#define M4DIR2 0
+#define M4INTERR 19
+#define M4READ 43
+#define M4PWM 10
+#define M4DIR1 34
+#define M4DIR2 35
+#define M4POT A4
 
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
 actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
@@ -128,12 +132,11 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 
-  // Each actuator DESPERATELY needs to have a starting point of reference
-  // For simplicity's sake for now, I just put it at the midpoint. This can be tweaked when the robot is assembled.
-  act1.setTics(22821);
-  act2.setTics(22821);
+  // Potetiometer's min = 863, max = 999
 
+  act1.setTics(map(analogRead(M1POT),863,999,19596,26046));
 
+  //act1.setTics(22821);
 
 }
 
@@ -142,8 +145,9 @@ void loop()
   int *q;
   q = readData();
 
-  act1.moveAct(278);
-  act2.moveAct(303);
+  Serial.println(act1.getLen());
+  act1.moveAct(303);
+  //act2.moveAct(303);
 
 
 

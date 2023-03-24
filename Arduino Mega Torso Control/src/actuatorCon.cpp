@@ -45,12 +45,12 @@ void actuatorCon::moveAct(int desiredLen)
     if(sumError > errorBound) sumError = errorBound;
     if(sumError < -errorBound) sumError = -errorBound;
 
-    if (error <= -2)
+    if (error <= -3)
     {
         digitalWrite(this->dir1, LOW);
         digitalWrite(this->dir2, HIGH);
     }
-    else if (error >= 2)
+    else if (error >= 3)
     {
         digitalWrite(this->dir1, HIGH);
         digitalWrite(this->dir2, LOW);
@@ -72,7 +72,7 @@ void actuatorCon::moveAct(int desiredLen)
     // Max Length = 323 mm 
     // Difference of 80 mm
 
-    int finalError = map(abs(error), 0, abs(origError), 180, 255);
+    int finalError = map(abs(error), 0, abs(origError), 200, 255);
 
     // Serial.println(origError);
     // Serial.println(finalError);
