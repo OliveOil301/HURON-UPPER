@@ -7,7 +7,7 @@
 #include <Adafruit_SSD1306.h>
 
 //Screen stuff for debugging:
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -281,8 +281,10 @@ void motor4ISR()
 void setup()
 {
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    for(;;); // Don't proceed, loop forever
+    //for(;;); // Don't proceed, loop forever
+      // Uncomment this if you're using an I2C screen to debug. 
   }
+
   printDebugToScreen("Setup Starting");
 
   Serial.begin(9600);
