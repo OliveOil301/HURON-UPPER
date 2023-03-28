@@ -38,6 +38,7 @@ void actuatorCon::stopMotors()
 {
     digitalWrite(this->dir1, LOW);
     digitalWrite(this->dir2, LOW);
+    runOnce = 0;
 }
 
 void actuatorCon::moveAct(int desiredLen)
@@ -61,11 +62,11 @@ void actuatorCon::moveAct(int desiredLen)
         digitalWrite(this->dir1, HIGH);
         digitalWrite(this->dir2, LOW);
     }
-    else 
-    {
-        digitalWrite(this->dir1, LOW);
-        digitalWrite(this->dir2, LOW);
-    }
+    // else 
+    // {
+    //     digitalWrite(this->dir1, LOW);
+    //     digitalWrite(this->dir2, LOW);
+    // }
 
     error = Kp * currError + Ki * sumError + Kd * derError;
 
@@ -74,9 +75,7 @@ void actuatorCon::moveAct(int desiredLen)
         runOnce = 1;
     }
 
-    // Min Length = 243 mm
-    // Max Length = 323 mm 
-    // Difference of 80 mm
+    // Min Length = 243 mactuatorConm
 
     int finalError = map(abs(error), 0, abs(origError), 200, 255);
 

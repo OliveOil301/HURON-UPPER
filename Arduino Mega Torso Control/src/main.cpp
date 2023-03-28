@@ -21,9 +21,6 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-
-
-
 //* MOTOR PIN ASSIGNMENT *//
 /*
     x = Motor Number
@@ -88,7 +85,7 @@ int newPositionGoalIndex = 1; // This stores the index for the next goal to be s
 //TODO: Add a goal in setup() that adds a goal for the home position.
 
 Command tempComm = NONE;
-//Start the tempComm variable at NONE as default. Trust me, this needs to be here.
+// Start the tempComm variable at NONE as default. Trust me, this needs to be here.
 
 /** void clearSerialUntilCommand()
  * clears each character until a valid command start character is recieved.
@@ -299,13 +296,14 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 
+  setHomePositionGoal();
+
   //* Potentiometers read on Startup, find position *//
   act1.setTics(map(analogRead(M1POT),863,999,19596,26046));
   act2.setTics(map(analogRead(M2POT),863,999,19596,26046));
   act3.setTics(map(analogRead(M3POT),863,999,19596,26046));
   act4.setTics(map(analogRead(M4POT),863,999,19596,26046));
 
-  setHomePositionGoal();
   printDebugToScreen("Setup Complete");
 }
 
@@ -315,28 +313,35 @@ void loop()
 {
 
   if(tempComm == NONE){
-    tempComm = readCommand();
     act1.stopMotors();
+    act2.stopMotors();
+    tempComm = readCommand();
   }
+
+  // actuatorPositionGoals[currentPositionGoalIndex][0]
   
   else if (tempComm == MOVE){
     printDebugToScreen("MOVE");
+
+    //Serial.println(currentPositionGoalIndex);
     act1.moveAct(actuatorPositionGoals[currentPositionGoalIndex][0]);
-    Serial.println(actuatorPositionGoals[currentPositionGoalIndex][0]);
-    Serial.println(currentPositionGoalIndex);
-    
-    if (abs(act1.getLen() - actuatorPositionGoals[currentPositionGoalIndex][0]) <= 3){
-      Serial.println("DONE!");
-      tempComm = NONE;
-    }
+    //act2.moveAct(300);
+    // Serial.println(actuatorPositionGoals[currentPositionGoalIndex][0]);
 
     if (addMoveGoal(commandDigits)){
       printActuatorGoals();
     }
-
+    
+    // && (abs(act2.getLen() - (300)) <= 2)
+    if (abs(act1.getLen() - (actuatorPositionGoals[currentPositionGoalIndex][0])) <= 2){
+      Serial.println("DONE!");
+      currentPositionGoalIndex = (currentPositionGoalIndex+1)%10;
+      tempComm = NONE;
+    }
 
   } else {
     printDebugToScreen("GET");
+    tempComm = readCommand();
   }
 
   
