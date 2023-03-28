@@ -133,7 +133,6 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 
   // Potetiometer's min = 863, max = 999
-
   act1.setTics(map(analogRead(M1POT),863,999,19596,26046));
 
   //act1.setTics(22821);
@@ -145,11 +144,9 @@ void loop()
   int *q;
   q = readData();
 
-  Serial.println(act1.getLen());
-  act1.moveAct(303);
+  // Serial.println(act1.getLen());
+  act1.moveAct(283);
   //act2.moveAct(303);
-
-
 
   // if (q[0] != -1)
   // {
