@@ -34,6 +34,12 @@ int actuatorCon::getLen()
     return len;
 }
 
+void actuatorCon::stopMotors()
+{
+    digitalWrite(this->dir1, LOW);
+    digitalWrite(this->dir2, LOW);
+}
+
 void actuatorCon::moveAct(int desiredLen)
 {
 

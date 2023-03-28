@@ -20,6 +20,7 @@ public:
     int getTics();
     int getLen();
     void moveAct(int desired);
+    void stopMotors();
 };
 
 #endif
