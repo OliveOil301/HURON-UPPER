@@ -208,6 +208,7 @@ bool addMoveGoal(int* commandNumbers){
   } else { //If we are good to add the goal to the array:
 
     //Parse the commandNumbers to get the actual actuator lengths
+
     int actuatorPositions[4] = {0, 0, 0, 0};
     for (int j = 0; j <= 9; j += 3)
     {
@@ -325,17 +326,21 @@ void loop()
 
     //Serial.println(currentPositionGoalIndex);
     act1.moveAct(actuatorPositionGoals[currentPositionGoalIndex][0]);
-    //act2.moveAct(300);
-    // Serial.println(actuatorPositionGoals[currentPositionGoalIndex][0]);
+    //act2.moveAct(283);
+    Serial.println(actuatorPositionGoals[currentPositionGoalIndex][0]);
 
     if (addMoveGoal(commandDigits)){
+      Serial.println("INSIDE");
       printActuatorGoals();
     }
     
     // && (abs(act2.getLen() - (300)) <= 2)
-    if (abs(act1.getLen() - (actuatorPositionGoals[currentPositionGoalIndex][0])) <= 2){
+    else if (abs(act1.getLen() - (actuatorPositionGoals[currentPositionGoalIndex][0])) <= 2){
       Serial.println("DONE!");
+        
       currentPositionGoalIndex = (currentPositionGoalIndex+1)%10;
+
+      Serial.println(currentPositionGoalIndex);
       tempComm = NONE;
     }
 
