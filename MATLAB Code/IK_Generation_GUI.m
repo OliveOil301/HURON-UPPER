@@ -10,8 +10,8 @@
 
 %minimum and maximum actuator lengths to check if a given transformation is
 %possible for the actuators to reach
-actuatorMinLength = 0.2385;
-actuatorMaxLength = 0.3285;
+actuatorMinLength = 0.239;
+actuatorMaxLength = 0.328;
 
 % Minimum and maximum rotation amounts for roll, pitch, yaw
 minRoll = -30;

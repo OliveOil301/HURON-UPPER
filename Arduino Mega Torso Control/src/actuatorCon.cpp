@@ -1,9 +1,7 @@
 #include "actuatorCon.h"
 
 int isrRead;
-int motorTics;
-int smallPotValue;
-int largePotValue;
+
 
 /** actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int pot, int smPotVal, int lrgPotVal)
  * @param interr the encoder pin that needs an interrupt attached
@@ -25,12 +23,17 @@ actuatorCon::actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int 
     this->pwm = pwm;
     this->dir1 = dir1;
     this->dir2 = dir2;
+    this->potentiometer = pot;
+    this->smallPotValue = smPotVal;
+    this->largePotValue = lrgPotVal;
+
 
     pinMode(this->interr, INPUT);
     pinMode(this->read, INPUT);
     pinMode(this->pwm, OUTPUT);
     pinMode(this->dir1, OUTPUT);
     pinMode(this->dir2, OUTPUT);
+    pinMode(this->potentiometer, INPUT);
 }
 
 void actuatorCon::getLen()
@@ -46,28 +49,28 @@ void actuatorCon::setLen()
  * @param ticks the number of ticks that the motor is already at
  * This is used on startup to set the actuator length so the actuators know their lengths
 */
-void actuatorCon::setTics(int ticks)
+void actuatorCon::setTicks(int ticks)
 {
-    motorTics = ticks;
+    motorTicks = ticks;
 }
 
-int actuatorCon::getTics()
+int actuatorCon::getTicks()
 {
-    return motorTics;
+    return motorTicks;
 }
 
 /** void incrementTicks()
  * increases the tick count by one 
 */
 void actuatorCon::incrementTicks(){
-    this->motorTics++;
+    this->motorTicks++;
 }
 
 /** void decrementTicks()
  * decreases the tick count by one
 */
 void actuatorCon::decrementTicks(){
-    this->motorTics--;
+    this->motorTicks--;
 }
 
 /** void setPositionFromPotentiometer()
@@ -76,5 +79,5 @@ void actuatorCon::decrementTicks(){
  * Since the potentiometer may be attaches at different angles for each actuator, this is the most accurate method.
 */
 void actuatorCon::setPositionFromPotentiometer(){
-
+    this->motorTicks = map(analogRead(this->potentiometer), this->smallPotValue, this->largePotValue,MIN_TICKS,MAX_TICKS);
 }

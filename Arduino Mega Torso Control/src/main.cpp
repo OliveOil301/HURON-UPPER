@@ -41,6 +41,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M1DIR1 28
 #define M1DIR2 29
 #define M1POT A1
+#define M1_MIN_POT 120
+#define M1_MAX_POT 270
+
 // motor 2 pins
 #define M2INTERR 2
 #define M2READ 41
@@ -48,6 +51,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M2DIR1 30
 #define M2DIR2 31
 #define M2POT A2
+#define M2_MIN_POT 120
+#define M2_MAX_POT 270
+
 // motor 3 pins
 #define M3INTERR 18
 #define M3READ 42
@@ -55,6 +61,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M3DIR1 32
 #define M3DIR2 33
 #define M3POT A3
+#define M3_MIN_POT 120
+#define M3_MAX_POT 270
+
 // motor 4 pins
 #define M4INTERR 19
 #define M4READ 43
@@ -62,11 +71,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M4DIR1 34
 #define M4DIR2 35
 #define M4POT A4
+#define M4_MIN_POT 120
+#define M4_MAX_POT 270
 
-actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2);
-actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2);
-actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2);
-actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2);
+actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2, M1POT, M1_MIN_POT, M1_MAX_POT);
+actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2, M2POT, M2_MIN_POT, M2_MAX_POT);
+actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2, M3POT, M3_MIN_POT, M3_MAX_POT);
+actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2, M4POT, M4_MIN_POT, M4_MAX_POT);
 
 //Communication global variables:
 enum Command{
@@ -297,6 +308,7 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 
+  //Set the first goal of the torso to moving to the home position.
   setHomePositionGoal();
 
 
