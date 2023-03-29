@@ -26,12 +26,25 @@ void actuatorCon::setLen()
 {
 }
 
-void actuatorCon::setTics(int s)
+/** * setTics(int s)
+ * sets the tick count for this actuator.
+ * @param ticks the number of ticks that the motor is already at
+ * This is used on startup to set the actuator length so the actuators know their lengths
+*/
+void actuatorCon::setTics(int ticks)
 {
-    motorTics = s;
+    motorTics = ticks;
 }
 
 int actuatorCon::getTics()
 {
     return motorTics;
+}
+
+void actuatorCon::incrementTicks(){
+    this->motorTics++;
+}
+
+void actuatorCon::decrementTicks(){
+    this->motorTics--;
 }

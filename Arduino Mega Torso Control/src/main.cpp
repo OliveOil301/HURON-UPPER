@@ -234,11 +234,11 @@ void motor1ISR()
 {
   if (digitalRead(M2READ))
   {
-    act1.setTics(act1.getTics() + 1);
+    act1.incrementTicks();
   }
   else
   {
-    act1.setTics(act1.getTics() - 1);
+    act1.decrementTicks();
   }
 }
 
@@ -246,11 +246,11 @@ void motor2ISR()
 {
   if (digitalRead(M2READ))
   {
-    act2.setTics(act2.getTics() + 1);
+    act2.incrementTicks();
   }
   else
   {
-    act2.setTics(act2.getTics() - 1);
+    act2.decrementTicks();
   }
 }
 
@@ -258,11 +258,11 @@ void motor3ISR()
 {
   if (digitalRead(M2READ))
   {
-    act3.setTics(act3.getTics() + 1);
+    act3.incrementTicks();
   }
   else
   {
-    act3.setTics(act3.getTics() - 1);
+    act3.decrementTicks();
   }
 }
 
@@ -270,11 +270,11 @@ void motor4ISR()
 {
   if (digitalRead(M2READ))
   {
-    act4.setTics(act4.getTics() + 1);
+    act4.incrementTicks();
   }
   else
   {
-    act4.setTics(act4.getTics() - 1);
+    act4.decrementTicks();
   }
 }
 
@@ -308,23 +308,30 @@ void setup()
 void loop()
 {
   //* Reading the most recent command sent to the microcontroller
+  /** after reading the command, we'll deal with it 
+   * If it was a MOVE command, it gets added to the queue, if possible
+   * If it was a GET command, send whatever information was requested
+   * 
+  */
   Command tempComm = readCommand();
-  //Reading commands and adding them to the move queue or doing whatever else
   if(tempComm == NONE){//If there isn't a full command or not a full command yet
+  //Do nothing
   } else if(tempComm == MOVE){//If there was just a MOVE command read
     printDebugToScreen("MOVE");
     if(addMoveGoal(commandDigits)){//Add it to the queue, if possible
       printActuatorGoals();
     } else {
       printDebugToScreen("MOVE Queue full");
+      Serial.write("E: Queue Full ");// sending an error message to MATLAB 
+
     }
   } else if(tempComm == GET){//If there was just a GET command read
     printDebugToScreen("GET");
   }
   //At this point, the commands have just been read and the Move queue is as updated
-  // as it is going to get for now
+  // as it's going to get for now
 
-  //* Moving the actuators as necessary, moving goals if we've completed
+  //* Checking if we've reached the goal position, setting new goals for actuators
   /** At this point, we're going to check if all the actuators are at the current goal position
    *    If so, we'll do the following:
    *      - Send a C (CONFIRMATION) command to the MATLAB script to 

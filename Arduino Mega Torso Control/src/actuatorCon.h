@@ -16,10 +16,12 @@ private:
 public:
     actuatorCon(int interr, int read, int pwm, int dir1, int dir2);
 
-    void setTics(int s);
+    void setTics(int ticks);
     int getTics();
     void getLen();
     void setLen();
+    void incrementTicks();
+    void decrementTicks();
 };
 
 #endif
