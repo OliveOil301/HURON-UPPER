@@ -222,7 +222,8 @@ bool addMoveGoal(int* commandNumbers){
     actuatorPositionGoals[newPositionGoalIndex][3] = actuatorPositions[3];
 
     //index the position while keeping it constrained from 0 to 9 with modulo
-    newPositionGoalIndex = (newPositionGoalIndex+1)%10;
+    //newPositionGoalIndex = (newPositionGoalIndex+1)%10;
+    Serial.println(newPositionGoalIndex);
     
     return true;// Now return true since everything worked out correctly
   }
@@ -324,23 +325,24 @@ void loop()
   else if (tempComm == MOVE){
     printDebugToScreen("MOVE");
 
-    //Serial.println(currentPositionGoalIndex);
-    act1.moveAct(actuatorPositionGoals[currentPositionGoalIndex][0]);
-    //act2.moveAct(283);
-    Serial.println(actuatorPositionGoals[currentPositionGoalIndex][0]);
-
     if (addMoveGoal(commandDigits)){
-      Serial.println("INSIDE");
+      //Serial.println("INSIDE");
       printActuatorGoals();
     }
     
-    // && (abs(act2.getLen() - (300)) <= 2)
-    else if (abs(act1.getLen() - (actuatorPositionGoals[currentPositionGoalIndex][0])) <= 2){
-      Serial.println("DONE!");
-        
-      currentPositionGoalIndex = (currentPositionGoalIndex+1)%10;
+    //Serial.println(currentPositionGoalIndex);
+    act1.moveAct(actuatorPositionGoals[newPositionGoalIndex][0]);
+    //act2.moveAct(283);
+    //Serial.println(actuatorPositionGoals[newPositionGoalIndex-1][0]);
 
+    // && (abs(act2.getLen() - (300)) <= 2)
+    if (abs(act1.getLen() - (actuatorPositionGoals[newPositionGoalIndex][0])) <= 2){
+      Serial.println("DONE!");
+      newPositionGoalIndex = (newPositionGoalIndex+1)%10;
+      currentPositionGoalIndex = (currentPositionGoalIndex+1)%10;
+      Serial.print(newPositionGoalIndex);
       Serial.println(currentPositionGoalIndex);
+      // Serial.println("");
       tempComm = NONE;
     }
 
