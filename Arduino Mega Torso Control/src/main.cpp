@@ -7,7 +7,7 @@
 #include <Adafruit_SSD1306.h>
 
 //Screen stuff for debugging:
-#define DEBUG_MODE false
+#define DEBUG_MODE true
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -289,6 +289,7 @@ void setup()
 
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(50,INPUT_PULLUP);
 
   //* Interrupt Service Routine initialization *//
   attachInterrupt(digitalPinToInterrupt(M1INTERR), motor1ISR, RISING);
@@ -306,17 +307,43 @@ void setup()
 
 void loop()
 {
+  //* Reading the most recent command sent to the microcontroller
   Command tempComm = readCommand();
-
-  if(tempComm == NONE){
-
-  } else if(tempComm == MOVE){
+  //Reading commands and adding them to the move queue or doing whatever else
+  if(tempComm == NONE){//If there isn't a full command or not a full command yet
+  } else if(tempComm == MOVE){//If there was just a MOVE command read
     printDebugToScreen("MOVE");
-    if(addMoveGoal(commandDigits)){
+    if(addMoveGoal(commandDigits)){//Add it to the queue, if possible
       printActuatorGoals();
+    } else {
+      printDebugToScreen("MOVE Queue full");
     }
-  } else {
+  } else if(tempComm == GET){//If there was just a GET command read
     printDebugToScreen("GET");
+  }
+  //At this point, the commands have just been read and the Move queue is as updated
+  // as it is going to get for now
+
+  //* Moving the actuators as necessary, moving goals if we've completed
+  /** At this point, we're going to check if all the actuators are at the current goal position
+   *    If so, we'll do the following:
+   *      - Send a C (CONFIRMATION) command to the MATLAB script to 
+   *          say we've moved to the current goal position
+   *      - Update the current goal to the next position
+   * After that, we'll check if there is a goal at the current goal position.
+   *    If so, we'll do the following:
+   *      - Set the individual actuator goals based on the calculated 
+   * 
+  */
+
+
+
+
+
+
+  if(digitalRead(50)==LOW){//If we pressed the button
+    Serial.write("C123123123123");
+    printDebugToScreen("Command Sent to MATLAB");
   }
 
   // if(tempComm != NONE){
