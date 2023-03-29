@@ -226,9 +226,8 @@ while true
         if ~isempty(text) % If it's not empty, you can print
             time = string(datetime('now','Format','HH:mm:ss'));
             microcontrollerResponse.Text = text + " T:" + time;
-            readSerialPortFlag = 0; % reset the flag
         else
-            flush(device,"input"); % If the serial port is being weird, flush it
+            flush(device,"input"); % If the serial port is 
         end
     end
     
