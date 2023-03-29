@@ -81,3 +81,27 @@ void actuatorCon::decrementTicks(){
 void actuatorCon::setPositionFromPotentiometer(){
     this->motorTicks = map(analogRead(this->potentiometer), this->smallPotValue, this->largePotValue,MIN_TICKS,MAX_TICKS);
 }
+
+/** int moveToPosition(int startPosition, int endPosition, unsigned long startTime, unsigned long endTime)
+ * sets the speed and direction of the actuator based on the following factors:
+ *   - Current position
+ *   - What percent complete the movement should be done (calculated from time vs time left)
+ * @param startPosition the position the actuator started at. Used for interpolation
+ * @param endPosition the position the actuator should end at
+ * @param startTime the time the movement started
+ * @param endTime the time the movement should end
+ * @param currentTime the current time from millis() so it doesn't have to be called multiple times
+ * 
+*/
+int actuatorCon::moveToPosition(int startPosition, int endPosition, unsigned long startTime, unsigned long endTime, unsigned long currentTime){
+    //If we haven't run out of time:
+    //  Set the goal position to the the correct proportion of the final position 
+    //  based off the time that has passed. 
+    //  50% of time passed = actuator should be 50% there
+
+
+    //If we have run out of time:
+    //At this point, we should just have a regualar 
+    //  PID controller until we get close enough
+
+}
