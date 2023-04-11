@@ -38,23 +38,25 @@ actuatorCon::actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int 
 
 int actuatorCon::getLen()
 {
+    return (((this->motorTicks/TICKS_PER_ROTATION)/GEAR_RATIO)*SCREW_PITCH); 
 }
 
-void actuatorCon::setLen()
+void actuatorCon::setLen(int millimeters)
 {
+    this->motorTicks = (((unsigned long)millimeters)/SCREW_PITCH)*GEAR_RATIO*TICKS_PER_ROTATION;
 }
 
 /** * setTics(int s)
  * sets the tick count for this actuator.
  * @param ticks the number of ticks that the motor is already at
- * This is used on startup to set the actuator length so the actuators know their lengths
+ * This can be used on startup to set the actuator length so the actuators know their lengths
 */
 void actuatorCon::setTicks(int ticks)
 {
     motorTicks = ticks;
 }
 
-int actuatorCon::getTicks()
+unsigned long actuatorCon::getTicks()
 {
     return motorTicks;
 }
@@ -90,41 +92,91 @@ void actuatorCon::recordPositionError(int error){
     this->lastPositionErrors[1] = this->lastPositionErrors[0];
     this->lastPositionErrors[0] = error;//The new error value
     positionErrorSum = this->lastPositionErrors[2] + this->lastPositionErrors[1] + this->lastPositionErrors[0];
+
+    //Finding the derivative error
+    //This should increase if the error gets higher/stays the same
+    this->derivativeError = lastPositionErrors[2] -(lastPositionErrors[2]-lastPositionErrors[0]);
 }
 
-/** int moveToPosition(int startLength, int endLength, unsigned long startTime, unsigned long endTime)
+
+/** void setStartingPosition()
+ * saves the starting position for interpolation movements as the current position
+*/
+void actuatorCon::recordInterpolationStartPos(){
+    this->interpolationStartLength = getLen();
+}
+
+/** int moveToPosition(int startLength, int finalLength, unsigned long startTime, unsigned long endTime)
  * sets the speed and direction of the actuator based on the following factors:
  *   - Current position
  *   - What percent complete the movement should be done (calculated from time vs time left)
- * @param startLength the position the actuator started at. Used for interpolation
- * @param endLength the position the actuator should end at
+ * @param finalLength the position the actuator should end at
  * @param startTime the time the movement started
  * @param endTime the time the movement should end
  * @param currentTime the current time from millis() so it doesn't have to be called multiple times
  * 
 */
-int actuatorCon::moveToPosition(int startLength, int endLength, unsigned long startTime, unsigned long endTime, unsigned long currentTime){
-    float percentComplete = (currentTime-startTime)/(endTime-startTime);
+int actuatorCon::moveToPosition(int finalLength, unsigned long startTime, unsigned long endTime, unsigned long currentTime){
+    float percentComplete = ((float)(currentTime-startTime))/((float)(endTime-startTime));
+    float effort = 0.01;
 
-    if (percentComplete<1){//If we haven't yet run out of time,
+    if (percentComplete<1.00){//If we haven't yet run out of time,
         //  Set the goal position to the the correct proportion of the final position 
         //  based off the time that has passed. 
         //  50% of time passed = actuator should be 50% there
-        int goalLength = startLength + ((endLength-startLength)*percentComplete); 
+        int goalLength = this->interpolationStartLength + ((finalLength-this->interpolationStartLength)*percentComplete); 
         int positionError = goalLength-getLen();
         recordPositionError(positionError);
-        int effort = P_VALUE*positionError + I_VALUE*this->positionErrorSum;
-        int direction = effort/abs(effort);
+
+        effort = P_VALUE*(float)positionError + I_VALUE*(float)this->positionErrorSum + D_VALUE*(float)derivativeError;
+        
+        Serial.print("| goal,act: ");
+        Serial.print(goalLength);
+        Serial.print(", ");
+        Serial.print(getLen());
+        Serial.print("| der: ");
+        Serial.print(this->derivativeError);
+        Serial.print("| e: ");
+        Serial.print(effort);
+        
         
     } else {//If we've run out of time
         //At this point, we should just have a regualar 
         //  PID controller until we get close enough
-
+        int positionError = finalLength-getLen();
+        recordPositionError(positionError);
+        effort = (P_VALUE*2)*positionError + (I_VALUE*2)*this->positionErrorSum + D_VALUE*(float)derivativeError;
+        Serial.print("o");
+        Serial.print("| goal,act: ");
+        Serial.print(finalLength);
+        Serial.print(", ");
+        Serial.print(getLen());
+        Serial.print("| der: ");
+        Serial.print(this->derivativeError);
+        Serial.print("| e: ");
+        Serial.print(effort);
     }
 
 
-    //If we have run out of time:
-    //At this point, we should just have a regualar 
-    //  PID controller until we get close enough
+    //At this point, we're moving the motor according to the defined effort and direction values
+    if (effort>=0){
+        //If we want the ticks to go up, Dir1 = low, Dir2 = high
+        digitalWrite(this->dir1, LOW);
+        digitalWrite(this->dir2, HIGH);
+    } else {
+        //If we want the ticks to go down, Dir1 = high, Dir2 = low
+        digitalWrite(this->dir1, HIGH);
+        digitalWrite(this->dir2, LOW);
+    }
 
+    analogWrite(this->pwm, constrain(abs((int)effort), 0, 255));
+    return effort;
+}
+
+
+/** void stop()
+ * decreases the tick count by one
+*/
+void actuatorCon::stop(){
+    digitalWrite(this->pwm, LOW);
 }

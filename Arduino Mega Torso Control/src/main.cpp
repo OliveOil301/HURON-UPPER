@@ -7,7 +7,10 @@
 #include <Adafruit_SSD1306.h>
 
 //Screen stuff for debugging:
-#define DEBUG_MODE true
+#define DEBUG_MODE false
+
+#define MAX_MILLIMETERS_PER_SECOND 5
+#define MOVEMENT_SPEED_SAFETY_FACTOR 1.2
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -128,19 +131,19 @@ void motor4ISR()
     act4.incrementTicks();
   }
 }
-//Communication global variables:
-enum Command{
-  NONE,
-  MOVE,
-  GET
-};
-/** Command Start Characters:
- * 'M' - MOVE, move to the position indicated in the following digits
- * 'G' - GET, get data on the current position
-*/
 
+
+enum State{
+  IDLE,
+  COMMAND_MOVING,
+  COMMAND_WAITING,
+  COMMAND_GETTING
+};
+State currentState = IDLE;
 
 unsigned long currentTime = 0;
+unsigned long movementStartTime = 0;
+unsigned long movementEndTime = 0;
 
 //* QUEUE CODE ----------------------
 int commandQueue[10][5];//the queue of commands
@@ -151,6 +154,14 @@ int commandQueue[10][5];//the queue of commands
 
 int currentCommandIndex = 0; //The index of the above array for the current position goal.
 int commandInsertIndex = 1; // This stores the index for the next command to be set to. This is used to keep track of the new goals in the system 
+
+
+//Communication global variables:
+//TODO: Add a list of valid command characters that cna be iterated through with a command
+/** Command Start Characters:
+ * 'M' - MOVE, move to the position indicated in the following digits
+ * 'G' - GET, get data on the current position
+*/
 
 
 
@@ -277,11 +288,11 @@ bool addGoalToQueue(int commandChar, int* commandNumbers){
     }
 
     //add the new goal to the correct position in the array
-    commandQueue[commandInsertIndex][0] = actuatorPositions[0];
-    commandQueue[commandInsertIndex][1] = actuatorPositions[1];
-    commandQueue[commandInsertIndex][2] = actuatorPositions[2];
-    commandQueue[commandInsertIndex][3] = actuatorPositions[3];
-    commandQueue[commandInsertIndex][4] = commandChar;//Saving the type of command
+    commandQueue[commandInsertIndex][0] = commandChar;//Saving the type of command
+    commandQueue[commandInsertIndex][1] = actuatorPositions[0];
+    commandQueue[commandInsertIndex][2] = actuatorPositions[1];
+    commandQueue[commandInsertIndex][3] = actuatorPositions[2];
+    commandQueue[commandInsertIndex][4] = actuatorPositions[3];
 
     //index the position while keepping it constrained from 0 to 9 with modulo
     commandInsertIndex = (commandInsertIndex+1)%10;
@@ -299,6 +310,21 @@ bool newCommandsAvailable(){
   } else {
     return true;
   }
+}
+
+
+/** unsigned long getMovementTime()
+ * @returns the fastest time we can interpolate the movement position
+ *  This calculates the quickest time we can get all 4 actuators there from 
+ *  the current and ending positions
+*/
+unsigned long getMovementTime(){
+  int act1Delta = commandQueue[currentCommandIndex][1] - act1.getLen();
+  int act2Delta = commandQueue[currentCommandIndex][2] - act2.getLen();
+  int act3Delta = commandQueue[currentCommandIndex][3] - act3.getLen();
+  int act4Delta = commandQueue[currentCommandIndex][4] - act4.getLen();
+  int maxDelta = max(max(act1Delta,act2Delta),max(act3Delta,act4Delta));
+  return maxDelta*((1/(float)MAX_MILLIMETERS_PER_SECOND)*100)*MOVEMENT_SPEED_SAFETY_FACTOR;
 }
 
 
@@ -333,10 +359,10 @@ void setup()
   //This is used to save the current position to be used for interpolation. 
   // This needs to be called once before any interpolation movement so we can know what
   // position the interpolation started from
-  act1.setStartingPosition();
-  act2.setStartingPosition();
-  // act3.setStartingPosition();
-  // act4.setStartingPosition();
+  act1.recordInterpolationStartPos();
+  act2.recordInterpolationStartPos();
+  // act3.recordInterpolationStartPos();
+  // act4.recordInterpolationStartPos();
 
   //Set the first goal of the torso to moving to the home position.
   setHomePositionGoal();
@@ -344,14 +370,6 @@ void setup()
 
   printDebugToScreen("Setup Complete");
 }
-
-enum State{
-  IDLE,
-  COMMAND_MOVING,
-  COMMAND_WAITING,
-  COMMAND_GETTING
-};
-State currentState = IDLE;
 
 
 void loop()
@@ -373,21 +391,24 @@ void loop()
 
       if (newCommandsAvailable()){
         //If we have a new command, find what it is and move to the corresponding state
-        switch(commandQueue[currentCommandIndex][4]){
-          case 'M':
-            //We have a MOVE command up next:
+        switch(commandQueue[currentCommandIndex][0]){
 
+          case 'M'://We have a MOVE command up next:
             //save the current actuator positions
-
+            act1.recordInterpolationStartPos();
+            act2.recordInterpolationStartPos();
+            act3.recordInterpolationStartPos();
+            act4.recordInterpolationStartPos();
+            movementStartTime = currentTime;
             //switch to the moving state
             currentState = COMMAND_MOVING;
             break;
-          case 'W':
-            //We have a WAIT command up next:
+
+          case 'W'://We have a WAIT command up next:
             currentState = COMMAND_WAITING;
             break;
-          case 'G':
-            //We have a GET command up next:
+
+          case 'G'://We have a GET command up next:
             currentState = COMMAND_GETTING;
             break;
         }

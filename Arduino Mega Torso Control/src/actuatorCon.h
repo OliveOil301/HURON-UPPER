@@ -11,19 +11,24 @@ private:
     int pwm;
     int dir1;
     int dir2;
-    long motorTicks = 0;
+    unsigned long motorTicks = 0;
     int potentiometer;
     int smallPotValue;
     int largePotValue;
 
     int lastPositionErrors[3] = {0, 0, 0};
     int positionErrorSum = 0;
+    int derivativeError = 0;
+    int interpolationStartLength = 239;
 
     #define MAX_TICKS 41328 // This is the number of ticks that correspond to the maximum actuator position of 328mm
     #define MIN_TICKS 30115 // Number of ticks that corresponds to the minimum actuator length
-    #define P_VALUE 5
+    #define P_VALUE 8
     #define I_VALUE 5
-    #define D_Valie 0
+    #define D_VALUE 10
+    #define TICKS_PER_ROTATION 16
+    #define GEAR_RATIO 18.75
+    #define SCREW_PITCH 1.25
 
     void recordPositionError(int error);
 
@@ -31,13 +36,15 @@ public:
     actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int pot, int smPotVal, int lrgPotVal);
 
     void setTicks(int ticks);
-    int getTicks();
+    unsigned long getTicks();
     int getLen();
-    void setLen();
+    void setLen(int millimeters);
     void incrementTicks();
     void decrementTicks();
     void setPositionFromPotentiometer();
-    int moveToPosition(int startLength, int endLength, unsigned long startTime, unsigned long endTime, unsigned long currentTime);
+    void recordInterpolationStartPos();
+    int moveToPosition(int finalLength, unsigned long startTime, unsigned long endTime, unsigned long currentTime);
+    void stop();
 };
 
 #endif
