@@ -26,7 +26,7 @@ maxYaw = 30;
 rotStuffBottom = 70;
 
 % Where to start drawing the bottom of the serial stuff
-serialStuffBottom = 250;
+serialStuffBottom = 400;
 
 % Locations of the top of the actuators relative to where the spine meets
 % the top plate
@@ -67,8 +67,11 @@ Actuator4TMatrixBottom = [eye(3) transpose(act4bottom); 0 0 0 1];
 global device;
 device = 0; % A placeholder for the serial device that will be opened by the user
 
-global sendCommandFlag;
-sendCommandFlag = 0;
+global sendMoveCommandFlag;
+sendMoveCommandFlag = 0;
+
+global sendWaitCommandFlag;
+sendWaitCommandFlag = 0;
 
 global readSerialPortFlag;
 readSerialPortFlag = 0;
@@ -146,21 +149,21 @@ draw7 = plot3(ax, spineCoords(:,1),spineCoords(:,2),spineCoords(:,3),'Color','#0
 % roll (rotation about x-axis) slider & Text
 rollSlider = uicontrol(p,'Style','slider','Units','pixels', 'Position',[1 rotStuffBottom+80 238 20], 'SliderStep',[0.01 0.1]);
 rollText = uicontrol(p,'Style','text','Units','pixels', 'Position',[2 rotStuffBottom+102 200 15],'String','Roll value in degrees: ','HorizontalAlignment','left');
-rollValue = uicontrol(p,'Style','text','Units','pixels', 'Position',[105 rotStuffBottom+102 40 15],'String','0','HorizontalAlignment','left');
+rollValue = uicontrol(p,'Style','text','Units','pixels', 'Position',[107 rotStuffBottom+102 40 15],'String','0','HorizontalAlignment','left');
 rollSlider.Value = 0;
 rollSlider.Min = minRoll;
 rollSlider.Max = maxRoll;
 % pitch (rotation about y-axis) slider
 pitchSlider = uicontrol(p,'Style','slider','Units','pixels', 'Position',[1 rotStuffBottom+40 238 20], 'SliderStep',[0.01 0.1]);
 pitchText = uicontrol(p,'Style','text','Units','pixels', 'Position',[2 rotStuffBottom+62 200 15],'String','Pitch value in degrees: ','HorizontalAlignment','left');
-pitchValue = uicontrol(p,'Style','text','Units','pixels', 'Position',[110 rotStuffBottom+62 40 15],'String','0','HorizontalAlignment','left');
+pitchValue = uicontrol(p,'Style','text','Units','pixels', 'Position',[111 rotStuffBottom+62 40 15],'String','0','HorizontalAlignment','left');
 pitchSlider.Value = 0;
 pitchSlider.Min = minPitch;
 pitchSlider.Max = maxPitch;
 % yaw (rotation about z-axis) slider
 yawSlider = uicontrol(p,'Style','slider','Units','pixels', 'Position',[1 rotStuffBottom 238 20], 'SliderStep',[0.01 0.1]);
 yawText = uicontrol(p,'Style','text','Units','pixels', 'Position',[2 rotStuffBottom+22 200 15],'String','Yaw value in degrees: ','HorizontalAlignment','left');
-yawValue = uicontrol(p,'Style','text','Units','pixels', 'Position',[111 rotStuffBottom+22 40 15],'String','0','HorizontalAlignment','left');
+yawValue = uicontrol(p,'Style','text','Units','pixels', 'Position',[110 rotStuffBottom+22 40 15],'String','0','HorizontalAlignment','left');
 yawSlider.Value = 0;
 yawSlider.Min = minYaw;
 yawSlider.Max = maxYaw;
@@ -183,16 +186,33 @@ serialBaudrateText = uilabel(p,'Position',[12 serialStuffBottom+30 110 22],'Text
 findAvailablePortsButton = uibutton(p, 'Position',[7 serialStuffBottom 70 22],'ButtonPushedFcn', ...
     @(btn,event) findAvailablePortsButtonPushed(serialPortdropdown), ...
     'Text','Find Ports');
-sendTorsoPositionButton = uibutton(p, 'Position',[40 serialStuffBottom-30 160 22],'ButtonPushedFcn', ...
+
+torsoPositionLabels = uilabel(p,'Position',[10 serialStuffBottom-40 250 22],'Text','Move Command:','FontWeight','bold');
+actuatorPositionLabels = uilabel(p,'Position',[10 serialStuffBottom-62 250 22],'Text','A1:          A2:          A3:          A4:');
+act1LengthLabel = uilabel(p,'Position',[10+20 serialStuffBottom-62 250 22],'Text','276');
+act2LengthLabel = uilabel(p,'Position',[60+20 serialStuffBottom-62 250 22],'Text','276');
+act3LengthLabel = uilabel(p,'Position',[111+20 serialStuffBottom-62 250 22],'Text','266');
+act4LengthLabel = uilabel(p,'Position',[161+20 serialStuffBottom-62 250 22],'Text','266');
+sendTorsoPositionButton = uibutton(p, 'Position',[9 serialStuffBottom-85 130 22],'ButtonPushedFcn', ...
     @(btn,event) sendTorsoPositionButtonPushed(), ...
-    'Text','Send Torso Position', 'Enable','off');
+    'Text','Send Move Command', 'Enable','off');
+
+
+waitCommandtitle = uilabel(p,'Position',[10 serialStuffBottom-115 250 22],'Text','Wait Command:','FontWeight','bold');
+waitTimeLabel = uilabel(p,'Position',[10 serialStuffBottom-137 250 22],'Text','Wait time (ms):');
+waitTimeTextBox = uieditfield(p,'numeric','Position',[95 serialStuffBottom-137 80 22]);
+sendWaitCommandButton = uibutton(p, 'Position',[9 serialStuffBottom-161 130 22],'ButtonPushedFcn', ...
+    @(btn,event) sendWaitCommandButtonPushed(), ...
+    'Text','Send Wait Command', 'Enable','off');
+
+
 global closeSerialPortButton;
 closeSerialPortButton;
 openSerialPortButton = uibutton(p, 'Position',[84 serialStuffBottom 70 22],'ButtonPushedFcn', ...
-    @(btn,event) openSerialButtonPushed(btn, serialPortdropdown.Value, serialBaudratedropdown.Value, sendTorsoPositionButton), ...
+    @(btn,event) openSerialButtonPushed(btn, serialPortdropdown.Value, serialBaudratedropdown.Value, sendTorsoPositionButton,sendWaitCommandButton), ...
     'Text','Open Port');
 closeSerialPortButton = uibutton(p, 'Position',[161 serialStuffBottom 70 22],'ButtonPushedFcn', ...
-    @(btn,event) closeSerialButtonPushed(btn, openSerialPortButton, sendTorsoPositionButton), ...
+    @(btn,event) closeSerialButtonPushed(btn, openSerialPortButton, sendTorsoPositionButton, sendWaitCommandButton), ...
     'Text','Close Port', 'Enable','off');
 
 lastRollValue = 0;
@@ -201,8 +221,8 @@ lastYawValue = 0;
 
 
 % Microcontroller communication stuff:
-microcontrollerResponseTitle = uilabel(p,'Position',[10 serialStuffBottom+120 250 22],'Text','Microcontroller Response:');
-microcontrollerResponse = uilabel(p,'Position',[10 serialStuffBottom+103 250 22],'Text','...');
+%microcontrollerResponseTitle = uilabel(p,'Position',[10 serialStuffBottom+120 250 22],'Text','Microcontroller Response:');
+%microcontrollerResponse = uilabel(p,'Position',[10 serialStuffBottom+103 250 22],'Text','...');
 
 
 %% GUI
@@ -212,25 +232,25 @@ while true
 
     pause(0.06);
 
-    if sendCommandFlag == 1
+    if sendMoveCommandFlag == 1
         stringToSend = convertStringsToChars(strcat("M",num2str(uint16(act1Len*1000)), num2str(uint16(act2Len*1000)), num2str(uint16(act3Len*1000)), num2str(uint16(act4Len*1000))));
         
         write(device, stringToSend, "char");
-        sendCommandFlag = 0;
+        sendMoveCommandFlag = 0;
         disp("Command Sent");
     end
 
-    if readSerialPortFlag == 1
-        %There are characters to read!
-        text = read(device,13,"char");
-        if ~isempty(text) % If it's not empty, you can print
-            time = string(datetime('now','Format','HH:mm:ss'));
-            microcontrollerResponse.Text = text + " T:" + time;
-            readSerialPortFlag = 0; % reset the flag
-        else
-            flush(device,"input"); % If the serial port is being weird, flush it
-        end
-    end
+%     if readSerialPortFlag == 1
+%         %There are characters to read!
+%         text = read(device,13,"char");
+%         if ~isempty(text) % If it's not empty, you can print
+%             time = string(datetime('now','Format','HH:mm:ss'));
+%             microcontrollerResponse.Text = text + " T:" + time;
+%             readSerialPortFlag = 0; % reset the flag
+%         else
+%             flush(device,"input"); % If the serial port is being weird, flush it
+%         end
+%     end
     
 
     % If the angles have changed, update the torso model and the text boxes
@@ -306,6 +326,11 @@ while true
         act2Len = sqrt(act2(1)^2 + act2(2)^2 + act2(3)^2);
         act3Len = sqrt(act3(1)^2 + act3(2)^2 + act3(3)^2);
         act4Len = sqrt(act4(1)^2 + act4(2)^2 + act4(3)^2);
+
+        act1LengthLabel.Text = num2str(act1Len*1000,'%.0f');
+        act2LengthLabel.Text = num2str(act2Len*1000,'%.0f');;
+        act3LengthLabel.Text = num2str(act3Len*1000,'%.0f');;
+        act4LengthLabel.Text = num2str(act4Len*1000,'%.0f');;
         
 
         % If any of the actuator lengths are invalid, change them to thick
@@ -353,35 +378,41 @@ function zeroButtonPushed(btn,rollSlider, pitchSlider, yawSlider)
     yawSlider.Value = 0;
 end
 
-function openSerialButtonPushed(btn, port, baud, sendButton)
+function openSerialButtonPushed(btn, port, baud, sendMoveButton, sendWaitButton)
     global device
     device = serialport(port, baud, 'Timeout',5);
-    configureCallback(device,"byte",13,@readSerialPort);
+    %configureCallback(device,"byte",13,@readSerialPort);
     btn.Enable = 'off';
-    sendButton.Enable = 'on';
+    sendMoveButton.Enable = 'on';
+    sendWaitButton.Enable = 'on';
     global closeSerialPortButton;
     closeSerialPortButton.Enable = 'on';
 end
 
 function sendTorsoPositionButtonPushed()
-    global sendCommandFlag;
-    sendCommandFlag = 1;
-    %convertStringsToChars
+    global sendMoveCommandFlag;
+    sendMoveCommandFlag = 1;
+end
+
+function sendWaitCommandButtonPushed()
+    global sendWaitCommandFlag;
+    sendWaitCommandFlag = 1;
 end
 
 function findAvailablePortsButtonPushed(serialPortdropdown)
     serialPortdropdown.Items = serialportlist("all");
 end
 
-function closeSerialButtonPushed(btn, openButton, sendButton)
+function closeSerialButtonPushed(btn, openButton, sendMoveButton, sendWaitButton)
     global device
     device = []; % delete the device and close the port
     btn.Enable = 'off'; %disable this button since the port is now closed
     openButton.Enable = 'on'; % enable the openButton since we can now open a new port
-    sendButton.Enable = 'off'; % Disable the send position button since the port is now closed
+    sendMoveButton.Enable = 'off'; % Disable the send move command button since the port is now closed
+    sendWaitButton.Enable = 'off'; % Disable the send wait command button since the port is now closed
 end
 
-function readSerialPort(src,evt)
-    global readSerialPortFlag;
-    readSerialPortFlag = 1;
-end
+% function readSerialPort(src,evt)
+%     global readSerialPortFlag;
+%     readSerialPortFlag = 1;
+% end
