@@ -36,7 +36,7 @@ actuatorCon::actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int 
     pinMode(this->potentiometer, INPUT);
 }
 
-void actuatorCon::getLen()
+int actuatorCon::getLen()
 {
 }
 
@@ -82,22 +82,45 @@ void actuatorCon::setPositionFromPotentiometer(){
     this->motorTicks = map(analogRead(this->potentiometer), this->smallPotValue, this->largePotValue,MIN_TICKS,MAX_TICKS);
 }
 
-/** int moveToPosition(int startPosition, int endPosition, unsigned long startTime, unsigned long endTime)
+/** void recordPositionError(int error)
+ * stores a new error value for the integral part of the PID controller
+*/
+void actuatorCon::recordPositionError(int error){
+    this->lastPositionErrors[2] = this->lastPositionErrors[1];
+    this->lastPositionErrors[1] = this->lastPositionErrors[0];
+    this->lastPositionErrors[0] = error;//The new error value
+    positionErrorSum = this->lastPositionErrors[2] + this->lastPositionErrors[1] + this->lastPositionErrors[0];
+}
+
+/** int moveToPosition(int startLength, int endLength, unsigned long startTime, unsigned long endTime)
  * sets the speed and direction of the actuator based on the following factors:
  *   - Current position
  *   - What percent complete the movement should be done (calculated from time vs time left)
- * @param startPosition the position the actuator started at. Used for interpolation
- * @param endPosition the position the actuator should end at
+ * @param startLength the position the actuator started at. Used for interpolation
+ * @param endLength the position the actuator should end at
  * @param startTime the time the movement started
  * @param endTime the time the movement should end
  * @param currentTime the current time from millis() so it doesn't have to be called multiple times
  * 
 */
-int actuatorCon::moveToPosition(int startPosition, int endPosition, unsigned long startTime, unsigned long endTime, unsigned long currentTime){
-    //If we haven't run out of time:
-    //  Set the goal position to the the correct proportion of the final position 
-    //  based off the time that has passed. 
-    //  50% of time passed = actuator should be 50% there
+int actuatorCon::moveToPosition(int startLength, int endLength, unsigned long startTime, unsigned long endTime, unsigned long currentTime){
+    float percentComplete = (currentTime-startTime)/(endTime-startTime);
+
+    if (percentComplete<1){//If we haven't yet run out of time,
+        //  Set the goal position to the the correct proportion of the final position 
+        //  based off the time that has passed. 
+        //  50% of time passed = actuator should be 50% there
+        int goalLength = startLength + ((endLength-startLength)*percentComplete); 
+        int positionError = goalLength-getLen();
+        recordPositionError(positionError);
+        int effort = P_VALUE*positionError + I_VALUE*this->positionErrorSum;
+        int direction = effort/abs(effort);
+        
+    } else {//If we've run out of time
+        //At this point, we should just have a regualar 
+        //  PID controller until we get close enough
+
+    }
 
 
     //If we have run out of time:

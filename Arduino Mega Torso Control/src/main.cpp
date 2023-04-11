@@ -41,8 +41,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M1DIR1 28
 #define M1DIR2 29
 #define M1POT A1
-#define M1_MIN_POT 120
-#define M1_MAX_POT 270
+#define M1_MIN_POT 870
+#define M1_MAX_POT 990
 
 // motor 2 pins
 #define M2INTERR 2
@@ -51,8 +51,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M2DIR1 30
 #define M2DIR2 31
 #define M2POT A2
-#define M2_MIN_POT 120
-#define M2_MAX_POT 270
+#define M2_MIN_POT 870
+#define M2_MAX_POT 990
 
 // motor 3 pins
 #define M3INTERR 18
@@ -61,8 +61,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M3DIR1 32
 #define M3DIR2 33
 #define M3POT A3
-#define M3_MIN_POT 120
-#define M3_MAX_POT 270
+#define M3_MIN_POT 870
+#define M3_MAX_POT 990
 
 // motor 4 pins
 #define M4INTERR 19
@@ -71,14 +71,63 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define M4DIR1 34
 #define M4DIR2 35
 #define M4POT A4
-#define M4_MIN_POT 120
-#define M4_MAX_POT 270
+#define M4_MIN_POT 870
+#define M4_MAX_POT 990
+
 
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2, M1POT, M1_MIN_POT, M1_MAX_POT);
 actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2, M2POT, M2_MIN_POT, M2_MAX_POT);
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2, M3POT, M3_MIN_POT, M3_MAX_POT);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2, M4POT, M4_MIN_POT, M4_MAX_POT);
 
+
+void motor1ISR()
+{
+  if (digitalRead(M1READ))
+  {
+    act1.decrementTicks();
+  }
+  else
+  {
+    act1.incrementTicks();
+  }
+}
+
+void motor2ISR()
+{
+  if (digitalRead(M2READ))
+  {
+    act2.decrementTicks();
+  }
+  else
+  {
+    act2.incrementTicks();
+  }
+}
+
+void motor3ISR()
+{
+  if (digitalRead(M3READ))
+  {
+    act3.decrementTicks();
+  }
+  else
+  {
+    act3.incrementTicks();
+  }
+}
+
+void motor4ISR()
+{
+  if (digitalRead(M4READ))
+  {
+    act4.decrementTicks();
+  }
+  else
+  {
+    act4.incrementTicks();
+  }
+}
 //Communication global variables:
 enum Command{
   NONE,
@@ -92,6 +141,8 @@ enum Command{
 
 int commandDigits[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //This array holds the digits of the most recent command. If there is no command, it should be all 0
+
+unsigned long currentTime = 0;
 
 int actuatorPositionGoals[10][4];//the goal position of the actuators, in millimeters
 int currentPositionGoalIndex = 0; //The index of the above array for the current position goal.
@@ -239,56 +290,6 @@ bool addMoveGoal(int* commandNumbers){
 }
 
 
-//*Motor functions:----------------
-
-void motor1ISR()
-{
-  if (digitalRead(M2READ))
-  {
-    act1.incrementTicks();
-  }
-  else
-  {
-    act1.decrementTicks();
-  }
-}
-
-void motor2ISR()
-{
-  if (digitalRead(M2READ))
-  {
-    act2.incrementTicks();
-  }
-  else
-  {
-    act2.decrementTicks();
-  }
-}
-
-void motor3ISR()
-{
-  if (digitalRead(M2READ))
-  {
-    act3.incrementTicks();
-  }
-  else
-  {
-    act3.decrementTicks();
-  }
-}
-
-void motor4ISR()
-{
-  if (digitalRead(M2READ))
-  {
-    act4.incrementTicks();
-  }
-  else
-  {
-    act4.decrementTicks();
-  }
-}
-
 void setup()
 {
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -298,15 +299,32 @@ void setup()
 
   printDebugToScreen("Setup Starting");
 
+  //Begin serial communication so we can connect to the MATLAB script
   Serial.begin(9600);
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(50,INPUT_PULLUP);
 
-  //* Interrupt Service Routine initialization *//
+  // attaching interrupts so we can use the encoders for positioning
   attachInterrupt(digitalPinToInterrupt(M1INTERR), motor1ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M2INTERR), motor2ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M3INTERR), motor3ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
+
+  //Using the potentiometers to set the starting positions of the actuators
+  //act1.setPositionFromPotentiometer();
+  //act2.setPositionFromPotentiometer();
+  //act3.setPositionFromPotentiometer();
+  //act4.setPositionFromPotentiometer();
+
+  //If the potentiometers aren't installed, this can be used to manually set the positions
+  act1.setLen(241);
+  act2.setLen(260);
+
+  //This is used to save the current position to be used for interpolation. 
+  // This needs to be called once before any interpolation movement so we can know what
+  // position the interpolation started from
+  act1.setStartingPosition();
+  act2.setStartingPosition();
+  // act3.setStartingPosition();
+  // act4.setStartingPosition();
 
   //Set the first goal of the torso to moving to the home position.
   setHomePositionGoal();
@@ -326,6 +344,8 @@ void loop()
    * 
   */
   Command tempComm = readCommand();
+  currentTime = millis();
+
   if(tempComm == NONE){//If there isn't a full command or not a full command yet
   //Do nothing
   } else if(tempComm == MOVE){//If there was just a MOVE command read
@@ -365,37 +385,4 @@ void loop()
     printDebugToScreen("Command Sent to MATLAB");
   }
 
-  // if(tempComm != NONE){
-  //   comm = tempComm;
-  // }
-  
-  // unsigned long currentTime = millis();
-  // switch (comm){
-  //   case NONE:
-  //     //
-  //     digitalWrite(LED_BUILTIN, LOW);
-  //     break;
-  //   case MOVE:
-  //     //
-  //     if (currentTime >= lastOnTime+1000){
-  //       digitalWrite(LED_BUILTIN, HIGH);
-  //       if(currentTime >= lastOnTime+2000){
-  //         lastOnTime = currentTime;
-  //       }
-  //     } else {
-  //       digitalWrite(LED_BUILTIN, LOW);
-  //     }
-  //     break;
-  //   case GET:
-  //     //
-  //     if (currentTime >= lastOnTime+200){
-  //       digitalWrite(LED_BUILTIN, HIGH);
-  //       if(currentTime >= lastOnTime+400){
-  //         lastOnTime = currentTime;
-  //       }
-  //     } else {
-  //       digitalWrite(LED_BUILTIN, LOW);
-  //     }
-  //     break;
-  // }
 }
