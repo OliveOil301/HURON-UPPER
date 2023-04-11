@@ -88,11 +88,11 @@ void motor1ISR()
 {
   if (digitalRead(M1READ))
   {
-    act1.decrementTicks();
+    act1.incrementTicks();
   }
   else
   {
-    act1.incrementTicks();
+    act1.decrementTicks();
   }
 }
 
@@ -100,11 +100,11 @@ void motor2ISR()
 {
   if (digitalRead(M2READ))
   {
-    act2.decrementTicks();
+    act2.incrementTicks();
   }
   else
   {
-    act2.incrementTicks();
+    act2.decrementTicks();
   }
 }
 
@@ -112,11 +112,11 @@ void motor3ISR()
 {
   if (digitalRead(M3READ))
   {
-    act3.decrementTicks();
+    act3.incrementTicks();
   }
   else
   {
-    act3.incrementTicks();
+    act3.decrementTicks();
   }
 }
 
@@ -124,11 +124,11 @@ void motor4ISR()
 {
   if (digitalRead(M4READ))
   {
-    act4.decrementTicks();
+    act4.incrementTicks();
   }
   else
   {
-    act4.incrementTicks();
+    act4.decrementTicks();
   }
 }
 
@@ -142,11 +142,12 @@ enum State{
 State currentState = IDLE;
 
 unsigned long currentTime = 0;
-unsigned long movementStartTime = 0;
-unsigned long movementEndTime = 0;
+unsigned long movementTime = 0; // The time it's going to take for the next movement
+
 
 //* QUEUE CODE ----------------------
-int commandQueue[10][5];//the queue of commands
+#define MAX_COMMAND_QUEUE_LENGTH 10
+int commandQueue[MAX_COMMAND_QUEUE_LENGTH][5];//the queue of commands
 // The command queue is structured as follows:
 // |   num1   |   num2   |   num3   |   num4   |   Command Char   |
 // This is structured to make movements as easy to understand as possible but 
@@ -295,7 +296,7 @@ bool addGoalToQueue(int commandChar, int* commandNumbers){
     commandQueue[commandInsertIndex][4] = actuatorPositions[3];
 
     //index the position while keepping it constrained from 0 to 9 with modulo
-    commandInsertIndex = (commandInsertIndex+1)%10;
+    commandInsertIndex = (commandInsertIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
     
     return true;// Now return true since everything worked out correctly
   }
@@ -395,11 +396,7 @@ void loop()
 
           case 'M'://We have a MOVE command up next:
             //save the current actuator positions
-            act1.recordInterpolationStartPos();
-            act2.recordInterpolationStartPos();
-            act3.recordInterpolationStartPos();
-            act4.recordInterpolationStartPos();
-            movementStartTime = currentTime;
+            movementTime = getMovementTime();
             //switch to the moving state
             currentState = COMMAND_MOVING;
             break;
@@ -416,6 +413,19 @@ void loop()
       break;
     case COMMAND_MOVING:
       //We have to move with a move command
+      int act1Error = abs(act1.moveToPosition(commandQueue[currentCommandIndex][1], movementTime));
+      int act2Error = abs(act2.moveToPosition(commandQueue[currentCommandIndex][2], movementTime));
+      int act3Error = abs(act3.moveToPosition(commandQueue[currentCommandIndex][3], movementTime));
+      int act4Error = abs(act4.moveToPosition(commandQueue[currentCommandIndex][4], movementTime));
+      if(max(max(act1Error,act2Error),max(act3Error,ac4Error))<=4){
+        //If the maximum error is less than or equal to 4mm, we can say we're finished with the movement
+        act1.stop();
+        act2.stop();
+        act3.stop();
+        act4.stop();
+        currentCommandIndex = (currentCommandIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
+        currentState = IDLE;
+      }
       break;
     case COMMAND_WAITING:
       //stuff
