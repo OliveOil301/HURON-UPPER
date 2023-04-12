@@ -46,6 +46,7 @@ void actuatorCon::setLen(int millimeters)
     this->motorTicks = (((unsigned long)millimeters)/SCREW_PITCH)*GEAR_RATIO*TICKS_PER_ROTATION;
 }
 
+
 /** * setTics(int s)
  * sets the tick count for this actuator.
  * @param ticks the number of ticks that the motor is already at
@@ -111,50 +112,60 @@ void actuatorCon::recordInterpolationStartPos(){
  *   - Current position
  *   - What percent complete the movement should be done (calculated from time vs time left)
  * @param finalLength the position the actuator should end at
- * @param startTime the time the movement started
- * @param endTime the time the movement should end
- * @param currentTime the current time from millis() so it doesn't have to be called multiple times
- * 
+ * @param actuationTime the time it is going to take to complete the movement
+ * @return the current position error, in millimeters
 */
-int actuatorCon::moveToPosition(int finalLength, unsigned long startTime, unsigned long endTime, unsigned long currentTime){
-    float percentComplete = ((float)(currentTime-startTime))/((float)(endTime-startTime));
+int actuatorCon::moveToPosition(int finalLength, unsigned long actuationTime){
+    unsigned long currentTime = millis();
+    //The first thing we do is see if this is a new movement or one we've already started:
+    if (this->lastInterpolationEndLength != finalLength){
+        //IF: this is a new interpolation request,
+        //   - Remember enerything that we need and make sure we don't re-write it until we move next time
+        this->lastInterpolationEndLength = finalLength;
+        this->interpolationStartLength = getLen();
+        this->interpolationStartTime = currentTime;
+        this->interpolationEndTime = currentTime + actuationTime;
+    }
+    
+    float percentComplete = ((float)(currentTime-this->interpolationStartTime))/((float)(actuationTime));
     float effort = 0.01;
+    int positionError = 0;
 
     if (percentComplete<1.00){//If we haven't yet run out of time,
         //  Set the goal position to the the correct proportion of the final position 
         //  based off the time that has passed. 
         //  50% of time passed = actuator should be 50% there
         int goalLength = this->interpolationStartLength + ((finalLength-this->interpolationStartLength)*percentComplete); 
-        int positionError = goalLength-getLen();
+        positionError = goalLength-getLen();
         recordPositionError(positionError);
 
         effort = P_VALUE*(float)positionError + I_VALUE*(float)this->positionErrorSum + D_VALUE*(float)derivativeError;
         
-        Serial.print("| goal,act: ");
-        Serial.print(goalLength);
-        Serial.print(", ");
-        Serial.print(getLen());
-        Serial.print("| der: ");
-        Serial.print(this->derivativeError);
-        Serial.print("| e: ");
-        Serial.print(effort);
+        // Serial.print("| goal,act: ");
+        // Serial.print(goalLength);
+        // Serial.print(", ");
+        // Serial.print(getLen());
+        // Serial.print("| der: ");
+        // Serial.print(this->derivativeError);
+        // Serial.print("| e: ");
+        // Serial.print(effort);
         
         
     } else {//If we've run out of time
         //At this point, we should just have a regualar 
         //  PID controller until we get close enough
-        int positionError = finalLength-getLen();
+        positionError = finalLength-getLen();
         recordPositionError(positionError);
         effort = (P_VALUE*2)*positionError + (I_VALUE*2)*this->positionErrorSum + D_VALUE*(float)derivativeError;
-        Serial.print("o");
-        Serial.print("| goal,act: ");
-        Serial.print(finalLength);
-        Serial.print(", ");
-        Serial.print(getLen());
-        Serial.print("| der: ");
-        Serial.print(this->derivativeError);
-        Serial.print("| e: ");
-        Serial.print(effort);
+        // Serial.print("o");
+        // Serial.print("| goal,act: ");
+        // Serial.print(finalLength);
+        // Serial.print(", ");
+        // Serial.print(getLen());
+        // Serial.print("| der: ");
+        // Serial.print(this->derivativeError);
+        // Serial.print("| e: ");
+        // Serial.print(effort);
     }
 
 
@@ -170,7 +181,7 @@ int actuatorCon::moveToPosition(int finalLength, unsigned long startTime, unsign
     }
 
     analogWrite(this->pwm, constrain(abs((int)effort), 0, 255));
-    return effort;
+    return finalLength-getLen();
 }
 
 

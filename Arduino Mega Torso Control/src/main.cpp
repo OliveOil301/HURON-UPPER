@@ -7,10 +7,10 @@
 #include <Adafruit_SSD1306.h>
 
 //Screen stuff for debugging:
-#define DEBUG_MODE false
+#define DEBUG_MODE true
 
-#define MAX_MILLIMETERS_PER_SECOND 5
-#define MOVEMENT_SPEED_SAFETY_FACTOR 1.2
+#define MAX_MILLIMETERS_PER_SECOND 6
+#define MOVEMENT_SPEED_SAFETY_FACTOR 1.0
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -154,14 +154,16 @@ int commandQueue[MAX_COMMAND_QUEUE_LENGTH][5];//the queue of commands
 // also allows other commands to sit in the queue, like D (DELAY) and G (GET) commands
 
 int currentCommandIndex = 0; //The index of the above array for the current position goal.
-int commandInsertIndex = 1; // This stores the index for the next command to be set to. This is used to keep track of the new goals in the system 
+int commandInsertIndex = 0; // This stores the index for the next command to be set to. This is used to keep track of the new goals in the system 
 
 
-//Communication global variables:
+//Communication variables:
+char validCommandCharacters[3] = {'M','G','W'};
 //TODO: Add a list of valid command characters that cna be iterated through with a command
 /** Command Start Characters:
  * 'M' - MOVE, move to the position indicated in the following digits
  * 'G' - GET, get data on the current position
+ * 'W' - WAIT, wait for a specified number of milliseconds
 */
 
 
@@ -191,20 +193,17 @@ void printDebugToScreen(String line){
 }
 
 void printActuatorGoals(){
-  // Only works on commandInsertIndex from 1-9, not 0
-  // Can be fixed but would make it a bit more complicated. 
-  // Not worth it since this is just for testing
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(10, 0);
-  display.print(String(commandQueue[commandInsertIndex-1][0]));
+  display.print(String(commandQueue[currentCommandIndex][1]));
   display.print(", ");
-  display.print(String(commandQueue[commandInsertIndex-1][1]));
+  display.print(String(commandQueue[currentCommandIndex][2]));
   display.print(", ");
-  display.print(String(commandQueue[commandInsertIndex-1][2]));
+  display.print(String(commandQueue[currentCommandIndex][3]));
   display.print(", ");
-  display.print(String(commandQueue[commandInsertIndex-1][3]));
+  display.print(String(commandQueue[currentCommandIndex][4]));
   display.display(); 
 
 }
@@ -219,52 +218,6 @@ void setHomePositionGoal(){
   commandQueue[0][3] = 266;
 }
 
-/** bool readCommand()
- * @return true if a command was recieved, false otherwise
- * If a command was recieved, the command type is stored in the global variable "currentCommand"
- * If a move command was recieved, the actuatorGoalPosition list is updated with the requested position
-*/
-bool readCommand()
-{
-  if (Serial.available() < 13){
-    //IF: there aren't enough characters in the port for a command to be read,
-    //   - return NONE since there isn't a command or isn't one yet
-    return NONE;
-  } else {
-    //IF: there *are* enough characters in the port for a command to be read,
-    
-    char firstChar = Serial.read();
-    if (firstChar != 'G' && firstChar != 'M'){
-      //IF: the first character is *not* a valid command start character,
-      //   - clear the serial bus until a valid start character is found
-      //   - then return false and the next loop can try to read the command
-      clearSerialUntilCommand();
-      return NONE;
-    } else {
-      //IF: the first character *is* a valid command start character,
-      //   - Read the characters and convert them to 12 numbers instead of 12 number chars
-      //   - Call addGoalToQueue() which will handle higher-level error checking on commands
-      //   - return 
-      //At this point, we have enough characters and it's a valid 
-      //command start character at the beginning
-      //We'll read through the chars and add them to the global array before returning the 
-      //command type
-      
-      //Read the 12 command digits and convert them to the actual number (char '2' -> int 2)
-      int commandDigits[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-      for (int i = 0; i<12; i++){
-        commandDigits[i] = Serial.read() - 48;
-      }
-
-
-      //RETURN the output of addGoalToQueue
-      //   - True if the command was added to the queue, false for the following reasons:
-      //     - False if a move command is out of the bounds of any actuator
-      //     - False if the queue is full
-      return addGoalToQueue(firstChar, commandDigits);
-    }
-  }
-}
 
 /** bool addGoalToQueue(int commandChar, int* commandNumbers)
  * @param commandChar: the char of the command start to be saved with the numbers
@@ -276,29 +229,110 @@ bool readCommand()
  *      false will also be returned if there was an error with the command (position isn't valid, etc.)
 */
 bool addGoalToQueue(int commandChar, int* commandNumbers){
-  if(commandInsertIndex == currentCommandIndex){
+  if((commandInsertIndex+1)%MAX_COMMAND_QUEUE_LENGTH == currentCommandIndex){
     //If we will overwrite the oldest goal, return false and disregard the movement goal
     return false;
-  } else { //If we are good to add the goal to the array:
+  }
+  //If we are good to add the goal to the array, we can continue
 
-    //Parse the commandNumbers to get the actual actuator lengths
-    int actuatorPositions[4] = {0, 0, 0, 0};
-    for (int j = 0; j <= 9; j += 3)
-    {
-      actuatorPositions[j / 3] = commandNumbers[j] * 100 + commandNumbers[j + 1] * 10 + commandNumbers[j + 2];
+  switch(commandChar){
+    case 'M':{
+      //Parse the commandNumbers to get the actual actuator lengths
+      int actuatorPositions[4] = {0, 0, 0, 0};
+      for (int j = 0; j <= 9; j += 3)
+      {
+        actuatorPositions[j / 3] = commandNumbers[j] * 100 + commandNumbers[j + 1] * 10 + commandNumbers[j + 2];
+      }
+
+      for(int i = 0; i<4; i++){
+        if(actuatorPositions[i]>328 || actuatorPositions[i]<239){
+          return false;//If any of the thengths are out of bounds
+        }
+      }
+
+      //add the new goal to the correct position in the array
+      commandQueue[commandInsertIndex][0] = commandChar;//Saving the type of command
+      commandQueue[commandInsertIndex][1] = actuatorPositions[0];
+      commandQueue[commandInsertIndex][2] = actuatorPositions[1];
+      commandQueue[commandInsertIndex][3] = actuatorPositions[2];
+      commandQueue[commandInsertIndex][4] = actuatorPositions[3];
+      //index the position while keepping it constrained from 0 to 9 with modulo
+      commandInsertIndex = (commandInsertIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
+      return true;// Now return true since everything worked out correctly
+      }break;
+    case 'G':{
+      return true;
+      }break;
+    case 'W':{
+      unsigned long waitTime = 0;
+      for (int i = 11; i>=0; i--){
+        //Iterating through each of the characters in the command
+        waitTime += commandNumbers[i]*pow(10,i);
+      }
+      commandQueue[commandInsertIndex][0] = commandChar;//Saving the type of command
+      commandQueue[commandInsertIndex][1] = waitTime;
+      commandQueue[commandInsertIndex][2] = 0;
+      commandQueue[commandInsertIndex][3] = 0;
+      commandQueue[commandInsertIndex][4] = 0;
+      return true;
+      }break;
+  }
+  return true;
+}
+
+
+bool isValidStartCharacter(char character){
+    for (int i = 0; i < 3; i++){
+      if(character == validCommandCharacters[i]){
+        return true;//If our character is one of the ones in the list of valid ones
+      }
     }
+    return false;//If it's not one of the valid ones
+}
 
-    //add the new goal to the correct position in the array
-    commandQueue[commandInsertIndex][0] = commandChar;//Saving the type of command
-    commandQueue[commandInsertIndex][1] = actuatorPositions[0];
-    commandQueue[commandInsertIndex][2] = actuatorPositions[1];
-    commandQueue[commandInsertIndex][3] = actuatorPositions[2];
-    commandQueue[commandInsertIndex][4] = actuatorPositions[3];
 
-    //index the position while keepping it constrained from 0 to 9 with modulo
-    commandInsertIndex = (commandInsertIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
-    
-    return true;// Now return true since everything worked out correctly
+/** bool readCommand()
+ * @return true if a command was recieved, false otherwise
+ * If a command was recieved, the command type is stored in the global variable "currentCommand"
+ * If a move command was recieved, the actuatorGoalPosition list is updated with the requested position
+*/
+bool readCommand()
+{
+  if (Serial.available() < 13){
+    //IF: there aren't enough characters in the port for a command to be read,
+    //   - return NONE since there isn't a command or isn't one yet
+    return false;
+  } else {
+    //IF: there *are* enough characters in the port for a command to be read,
+    // printDebugToScreen("got enough chars");
+    // delay(1000);
+    char firstChar = Serial.read();
+
+    if (isValidStartCharacter(firstChar)){
+      //IF: the first character *is* a valid command start character,
+      //   - Read the characters and convert them to 12 numbers instead of 12 number chars
+      //   - Call addGoalToQueue() which will handle higher-level error checking on commands
+      //   - return 
+      // printDebugToScreen("valid char");
+      // delay(1000);
+      //Read the 12 command digits and convert them to the actual number (char '2' -> int 2)
+      int commandDigits[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      for (int i = 0; i<12; i++){
+        commandDigits[i] = Serial.read() - 48;
+      }
+
+      //RETURN the output of addGoalToQueue
+      //   - True if the command was added to the queue, false for the following reasons:
+      //     - False if a move command is out of the bounds of any actuator
+      //     - False if the queue is full
+      return addGoalToQueue(firstChar, commandDigits);
+    } else {
+      //IF: the first character is *not* a valid command start character,
+      //   - clear the serial bus until a valid start character is found
+      //   - then return false and the next loop can try to read the command
+      clearSerialUntilCommand();
+      return false;
+    }
   }
 }
 
@@ -324,8 +358,9 @@ unsigned long getMovementTime(){
   int act2Delta = commandQueue[currentCommandIndex][2] - act2.getLen();
   int act3Delta = commandQueue[currentCommandIndex][3] - act3.getLen();
   int act4Delta = commandQueue[currentCommandIndex][4] - act4.getLen();
-  int maxDelta = max(max(act1Delta,act2Delta),max(act3Delta,act4Delta));
-  return maxDelta*((1/(float)MAX_MILLIMETERS_PER_SECOND)*100)*MOVEMENT_SPEED_SAFETY_FACTOR;
+  unsigned long maxDelta = max(max(act1Delta,act2Delta),max(act3Delta,act4Delta));
+  return maxDelta*((1/(float)MAX_MILLIMETERS_PER_SECOND)*1000)*MOVEMENT_SPEED_SAFETY_FACTOR;
+  //return 12000;
 }
 
 
@@ -348,25 +383,15 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(M4INTERR), motor4ISR, RISING);
 
   //Using the potentiometers to set the starting positions of the actuators
-  //act1.setPositionFromPotentiometer();
-  //act2.setPositionFromPotentiometer();
-  //act3.setPositionFromPotentiometer();
-  //act4.setPositionFromPotentiometer();
+  act1.setPositionFromPotentiometer();
+  act2.setPositionFromPotentiometer();
+  act3.setPositionFromPotentiometer();
+  act4.setPositionFromPotentiometer();
 
   //If the potentiometers aren't installed, this can be used to manually set the positions
-  act1.setLen(241);
-  act2.setLen(260);
+  // act1.setLen(241);
+  // act2.setLen(260);
 
-  //This is used to save the current position to be used for interpolation. 
-  // This needs to be called once before any interpolation movement so we can know what
-  // position the interpolation started from
-  act1.recordInterpolationStartPos();
-  act2.recordInterpolationStartPos();
-  // act3.recordInterpolationStartPos();
-  // act4.recordInterpolationStartPos();
-
-  //Set the first goal of the torso to moving to the home position.
-  setHomePositionGoal();
 
 
   printDebugToScreen("Setup Complete");
@@ -381,14 +406,20 @@ void loop()
    * If it was a GET command, send whatever information was requested
    * 
   */
-  bool commandReceived = readCommand();
+  bool commandRecieved = readCommand();
   currentTime = millis();
+  
+  if(commandRecieved){
+    printDebugToScreen("got a command");
+  }
+  
 
   switch(currentState){
-    case IDLE:
+    case IDLE:{
       //If we are in this state, all of the commands in the queue have been completed, or we just finished a command
       //To get out, any of the following needs to be true
       //   - We are behind a command (one was added) 
+      printDebugToScreen("In IDLE state");
 
       if (newCommandsAvailable()){
         //If we have a new command, find what it is and move to the corresponding state
@@ -397,7 +428,12 @@ void loop()
           case 'M'://We have a MOVE command up next:
             //save the current actuator positions
             movementTime = getMovementTime();
+            printDebugToScreen("Switching to Move");
+            delay(1000);
+            printDebugToScreen(String(movementTime));
+            delay(1000);
             //switch to the moving state
+            
             currentState = COMMAND_MOVING;
             break;
 
@@ -410,14 +446,16 @@ void loop()
             break;
         }
       }
-      break;
-    case COMMAND_MOVING:
+      }break;
+    case COMMAND_MOVING:{
+      printActuatorGoals();
+      delay(1000);
       //We have to move with a move command
       int act1Error = abs(act1.moveToPosition(commandQueue[currentCommandIndex][1], movementTime));
       int act2Error = abs(act2.moveToPosition(commandQueue[currentCommandIndex][2], movementTime));
       int act3Error = abs(act3.moveToPosition(commandQueue[currentCommandIndex][3], movementTime));
       int act4Error = abs(act4.moveToPosition(commandQueue[currentCommandIndex][4], movementTime));
-      if(max(max(act1Error,act2Error),max(act3Error,ac4Error))<=4){
+      if(max(max(act1Error,act2Error),max(act3Error,act4Error))<=4){
         //If the maximum error is less than or equal to 4mm, we can say we're finished with the movement
         act1.stop();
         act2.stop();
@@ -425,32 +463,42 @@ void loop()
         act4.stop();
         currentCommandIndex = (currentCommandIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
         currentState = IDLE;
+        printDebugToScreen("Switching to IDLE");
+        delay(1000);
+        printDebugToScreen(String(act1Error));
+        delay(250);
+        printDebugToScreen(String(act2Error));
+        delay(250);
+        printDebugToScreen(String(act3Error));
+        delay(250);
+        printDebugToScreen(String(act4Error));
+        delay(250);
       }
-      break;
-    case COMMAND_WAITING:
+      }break;
+    case COMMAND_WAITING:{
       //stuff
-      break;
-    case COMMAND_GETTING:
+      }break;
+    case COMMAND_GETTING:{
       //stuff
-      break;
+      }break;
     
   }
 
 
-  if(tempComm == NONE){//If there isn't a full command or not a full command yet
-  //Do nothing
-  } else if(tempComm == MOVE){//If there was just a MOVE command read
-    printDebugToScreen("MOVE");
-    if(addGoalToQueue(commandDigits)){//Add it to the queue, if possible
-      printActuatorGoals();
-    } else {
-      printDebugToScreen("MOVE Queue full");
-      Serial.write("E: Queue Full ");// sending an error message to MATLAB 
+  // if(tempComm == false){//If there isn't a full command or not a full command yet
+  // //Do nothing
+  // } else if(tempComm == true){//If there was just a MOVE command read
+  //   printDebugToScreen("MOVE");
+  //   if(addGoalToQueue(commandDigits)){//Add it to the queue, if possible
+  //     printActuatorGoals();
+  //   } else {
+  //     printDebugToScreen("MOVE Queue full");
+  //     Serial.write("E: Queue Full ");// sending an error message to MATLAB 
 
-    }
-  } else if(tempComm == GET){//If there was just a GET command read
-    printDebugToScreen("GET");
-  }
+  //   }
+  // } else if(tempComm == GET){//If there was just a GET command read
+  //   printDebugToScreen("GET");
+  // }
   //At this point, the commands have just been read and the Move queue is as updated
   // as it's going to get for now
 
@@ -471,9 +519,9 @@ void loop()
 
 
 
-  if(digitalRead(50)==LOW){//If we pressed the button
-    Serial.write("C123123123123");
-    printDebugToScreen("Command Sent to MATLAB");
-  }
+  // if(digitalRead(50)==LOW){//If we pressed the button
+  //   Serial.write("C123123123123");
+  //   printDebugToScreen("Command Sent to MATLAB");
+  // }
 
 }
