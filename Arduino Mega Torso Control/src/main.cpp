@@ -143,7 +143,7 @@ State currentState = IDLE;
 
 unsigned long currentTime = 0;
 unsigned long movementTime = 0; // The time it's going to take for the next movement
-
+unsigned long waitStartTime = 0;
 
 //* QUEUE CODE ----------------------
 #define MAX_COMMAND_QUEUE_LENGTH 10
@@ -428,16 +428,17 @@ void loop()
           case 'M'://We have a MOVE command up next:
             //save the current actuator positions
             movementTime = getMovementTime();
-            printDebugToScreen("Switching to Move");
-            delay(1000);
-            printDebugToScreen(String(movementTime));
-            delay(1000);
+            // printDebugToScreen("Switching to Move");
+            // delay(1000);
+            // printDebugToScreen(String(movementTime));
+            // delay(1000);
             //switch to the moving state
             
             currentState = COMMAND_MOVING;
             break;
 
           case 'W'://We have a WAIT command up next:
+            waitStartTime = currentTime;
             currentState = COMMAND_WAITING;
             break;
 
@@ -465,17 +466,22 @@ void loop()
         currentState = IDLE;
         printDebugToScreen("Switching to IDLE");
         delay(1000);
-        printDebugToScreen(String(act1Error));
-        delay(250);
-        printDebugToScreen(String(act2Error));
-        delay(250);
-        printDebugToScreen(String(act3Error));
-        delay(250);
-        printDebugToScreen(String(act4Error));
-        delay(250);
+        printDebugToScreen("Act1 E:" + String(act1.currentEffort));
+        delay(1000);
+        printDebugToScreen("Act2 E:" + String(act2.currentEffort));
+        delay(1000);
+        printDebugToScreen("Act3 E:" + String(act3.currentEffort));
+        delay(1000);
+        printDebugToScreen("Act4 E:" + String(act4.currentEffort));
+        delay(1000);
       }
       }break;
     case COMMAND_WAITING:{
+      if(currentTime>=waitStartTime+commandQueue[currentCommandIndex][1]){
+        //IF: It's time to continue
+        currentCommandIndex = (currentCommandIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
+        currentState = IDLE;
+      }
       //stuff
       }break;
     case COMMAND_GETTING:{
