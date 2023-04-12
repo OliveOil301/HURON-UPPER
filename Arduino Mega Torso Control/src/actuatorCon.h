@@ -28,9 +28,9 @@ private:
 
     #define MAX_TICKS 78720 // This is the number of ticks that correspond to the maximum actuator position of 328mm
     #define MIN_TICKS 57360 // Number of ticks that corresponds to the minimum actuator length
-    #define P_VALUE 7
-    #define I_VALUE 10
-    #define D_VALUE 10
+    #define P_VALUE 5
+    #define I_VALUE 3
+    #define D_VALUE 2
     #define TICKS_PER_ROTATION 16
     #define GEAR_RATIO 18.75
     #define SCREW_PITCH 1.25
@@ -50,6 +50,7 @@ public:
     void recordInterpolationStartPos();
     int moveToPosition(int finalLength, unsigned long actuationTime);
     void stop();
+    float currentEffort = 0;
 };
 
 #endif

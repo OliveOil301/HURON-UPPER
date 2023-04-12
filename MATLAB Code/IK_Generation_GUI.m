@@ -18,8 +18,8 @@ minRoll = -30;
 maxRoll = 30;
 minPitch = -30;
 maxPitch = 30;
-minYaw = -30;
-maxYaw = 30;
+minYaw = -40;
+maxYaw = 40;
 
 % Formatting the gui stuff
 % Where to start drawing the bottom of the scroll bars

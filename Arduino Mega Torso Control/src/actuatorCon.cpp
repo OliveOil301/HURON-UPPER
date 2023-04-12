@@ -180,7 +180,8 @@ int actuatorCon::moveToPosition(int finalLength, unsigned long actuationTime){
         digitalWrite(this->dir2, LOW);
     }
 
-    analogWrite(this->pwm, constrain(abs((int)effort), 0, 255));
+    analogWrite(this->pwm, map(constrain(abs((int)effort), 0, 300), 0, 300, 50, 255));
+    this->currentEffort = effort;
     return finalLength-getLen();
 }
 

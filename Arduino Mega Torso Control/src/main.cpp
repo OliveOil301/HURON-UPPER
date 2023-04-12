@@ -360,7 +360,7 @@ unsigned long getMovementTime(){
   int act4Delta = commandQueue[currentCommandIndex][4] - act4.getLen();
   unsigned long maxDelta = max(max(act1Delta,act2Delta),max(act3Delta,act4Delta));
   return maxDelta*((1/(float)MAX_MILLIMETERS_PER_SECOND)*1000)*MOVEMENT_SPEED_SAFETY_FACTOR;
-  //return 12000;
+  //return 4000;
 }
 
 
@@ -395,8 +395,12 @@ void setup()
 
 
   printDebugToScreen("Setup Complete");
+
+  // digitalWrite(M1DIR1, LOW);
+  // digitalWrite(M1DIR2, HIGH);
 }
 
+//int direction = 0; 
 
 void loop()
 {
@@ -457,6 +461,7 @@ void loop()
       int act3Error = abs(act3.moveToPosition(commandQueue[currentCommandIndex][3], movementTime));
       int act4Error = abs(act4.moveToPosition(commandQueue[currentCommandIndex][4], movementTime));
       if(max(max(act1Error,act2Error),max(act3Error,act4Error))<=4){
+      //if(act1Error<=4){
         //If the maximum error is less than or equal to 4mm, we can say we're finished with the movement
         act1.stop();
         act2.stop();
@@ -489,45 +494,24 @@ void loop()
       }break;
     
   }
-
-
-  // if(tempComm == false){//If there isn't a full command or not a full command yet
-  // //Do nothing
-  // } else if(tempComm == true){//If there was just a MOVE command read
-  //   printDebugToScreen("MOVE");
-  //   if(addGoalToQueue(commandDigits)){//Add it to the queue, if possible
-  //     printActuatorGoals();
+  
+  // int i = 0;
+  // for (i = 0; i<=255; i++){
+  //   Serial.println("Duty-cycle: " + String(i) + " | Ticks: " + String(act1.getTicks()));
+  //   analogWrite(M1PWM, i);
+  //   delay(10);
+  // }
+  // if (direction==1){
+  //       //If we want the ticks to go up, Dir1 = low, Dir2 = high
+  //       digitalWrite(M1DIR1, LOW);
+  //       digitalWrite(M1DIR2, HIGH);
+  //       direction = 0;
   //   } else {
-  //     printDebugToScreen("MOVE Queue full");
-  //     Serial.write("E: Queue Full ");// sending an error message to MATLAB 
-
+  //       //If we want the ticks to go down, Dir1 = high, Dir2 = low
+  //       digitalWrite(M1DIR1, HIGH);
+  //       digitalWrite(M1DIR2, LOW);
+  //       direction = 1;
   //   }
-  // } else if(tempComm == GET){//If there was just a GET command read
-  //   printDebugToScreen("GET");
-  // }
-  //At this point, the commands have just been read and the Move queue is as updated
-  // as it's going to get for now
-
-  //* Checking if we've reached the goal position, setting new goals for actuators
-  /** At this point, we're going to check if all the actuators are at the current goal position
-   *    If so, we'll do the following:
-   *      - Send a C (CONFIRMATION) command to the MATLAB script to 
-   *          say we've moved to the current goal position
-   *      - Update the current goal to the next position
-   * After that, we'll check if there is a goal at the current goal position.
-   *    If so, we'll do the following:
-   *      - Set the individual actuator goals based on the calculated 
-   * 
-  */
-
-
-
-
-
-
-  // if(digitalRead(50)==LOW){//If we pressed the button
-  //   Serial.write("C123123123123");
-  //   printDebugToScreen("Command Sent to MATLAB");
-  // }
+  // i = 0;
 
 }
