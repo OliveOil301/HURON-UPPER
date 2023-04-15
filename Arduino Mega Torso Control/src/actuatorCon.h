@@ -11,6 +11,8 @@ private:
     int pwm;
     int dir1;
     int dir2;
+    int PWM1;
+    int PWM2;
     unsigned long motorTicks = 0;
     int potentiometer;
     int smallPotValue;
@@ -38,6 +40,7 @@ private:
     void recordPositionError(int error);
 
 public:
+    actuatorCon(int interr, int read, int PWM1, int PWM2, int pot, int smPotVal, int lrgPotVal);
     actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int pot, int smPotVal, int lrgPotVal);
 
     void setTicks(int ticks);

@@ -6,23 +6,25 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
+
+
 //Screen stuff for debugging:
 #define DEBUG_MODE true
 
 #define MAX_MILLIMETERS_PER_SECOND 6
-#define MOVEMENT_SPEED_SAFETY_FACTOR 1.0
+#define MOVEMENT_SPEED_SAFETY_FACTOR 1.2
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+// #define SCREEN_WIDTH 128 // OLED display width, in pixels
+// #define SCREEN_HEIGHT 32 // OLED display height, in pixels
 
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-// The pins for I2C are defined by the Wire-library. 
-// On an arduino UNO:       A4(SDA), A5(SCL)
-// On an arduino MEGA 2560: 20(SDA), 21(SCL)
-// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+// // The pins for I2C are defined by the Wire-library. 
+// // On an arduino UNO:       A4(SDA), A5(SCL)
+// // On an arduino MEGA 2560: 20(SDA), 21(SCL)
+// // On an arduino LEONARDO:   2(SDA),  3(SCL), ...
+// #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+// #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 
 
@@ -36,46 +38,90 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
     MxDIR1 = Directional Pin 1 for Motor x
     MxDIR2 = Directional Pin 2 for Motor x
 */
+//* BTS 7960 PINS:-------------
+// motor 1 pins 
+// #define M1INTERR 3
+// #define M1READ 40
+// #define M1PWM1 4
+// #define M1PWM2 9
+// #define M1ENA 28
+// #define M1POT A1
+// #define M1_MIN_POT 870
+// #define M1_MAX_POT 990
 
-// motor 1 pins
+// // motor 2 pins
+// #define M2INTERR 2
+// #define M2READ 41
+// #define M2PWM1 12
+// #define M2PWM2 8
+// #define M2POT A2
+// #define M2_MIN_POT 870
+// #define M2_MAX_POT 990
+
+// // motor 3 pins
+// #define M3INTERR 18
+// #define M3READ 42
+// #define M3PWM1 11
+// #define M3PWM2 7
+// #define M3POT A3
+// #define M3_MIN_POT 870
+// #define M3_MAX_POT 990
+
+// // motor 4 pins
+// #define M4INTERR 19
+// #define M4READ 43
+// #define M4PWM1 10
+// #define M4PWM2 6
+// #define M4POT A4
+// #define M4_MIN_POT 158
+// #define M4_MAX_POT 990
+
+//* L298 Pins:--------------------
+// motor 1 pins 
 #define M1INTERR 3
 #define M1READ 40
-#define M1PWM 13
-#define M1DIR1 28
-#define M1DIR2 29
+#define M1PWM 4
+#define M1DIR1 35
+#define M1DIR2 9
 #define M1POT A1
-#define M1_MIN_POT 870
-#define M1_MAX_POT 990
+#define M1_MIN_POT 880
+#define M1_MAX_POT 993
 
 // motor 2 pins
 #define M2INTERR 2
 #define M2READ 41
 #define M2PWM 12
-#define M2DIR1 30
-#define M2DIR2 31
+#define M2DIR1 33
+#define M2DIR2 8
 #define M2POT A2
-#define M2_MIN_POT 870
-#define M2_MAX_POT 990
+#define M2_MIN_POT 823
+#define M2_MAX_POT 935
 
 // motor 3 pins
 #define M3INTERR 18
 #define M3READ 42
 #define M3PWM 11
-#define M3DIR1 32
-#define M3DIR2 33
+#define M3DIR1 31
+#define M3DIR2 7
 #define M3POT A3
-#define M3_MIN_POT 870
-#define M3_MAX_POT 990
+#define M3_MIN_POT 858
+#define M3_MAX_POT 970
 
 // motor 4 pins
-#define M4INTERR 19
+#define M4INTERR 20
 #define M4READ 43
 #define M4PWM 10
-#define M4DIR1 34
-#define M4DIR2 35
+#define M4DIR1 29
+#define M4DIR2 6
 #define M4POT A4
-#define M4_MIN_POT 870
-#define M4_MAX_POT 990
+#define M4_MIN_POT 158
+#define M4_MAX_POT 270
+
+//* BTS7960 Constructors
+// actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM1, M1PWM2, M1POT, M1_MIN_POT, M1_MAX_POT);
+// actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM1, M2PWM2, M2POT, M2_MIN_POT, M2_MAX_POT);
+// actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM1, M3PWM2, M3POT, M3_MIN_POT, M3_MAX_POT);
+// actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM1, M4PWM2, M4POT, M4_MIN_POT, M4_MAX_POT);
 
 
 actuatorCon act1 = actuatorCon(M1INTERR, M1READ, M1PWM, M1DIR1, M1DIR2, M1POT, M1_MIN_POT, M1_MAX_POT);
@@ -83,7 +129,7 @@ actuatorCon act2 = actuatorCon(M2INTERR, M2READ, M2PWM, M2DIR1, M2DIR2, M2POT, M
 actuatorCon act3 = actuatorCon(M3INTERR, M3READ, M3PWM, M3DIR1, M3DIR2, M3POT, M3_MIN_POT, M3_MAX_POT);
 actuatorCon act4 = actuatorCon(M4INTERR, M4READ, M4PWM, M4DIR1, M4DIR2, M4POT, M4_MIN_POT, M4_MAX_POT);
 
-
+unsigned long isrCalled = 0;
 void motor1ISR()
 {
   if (digitalRead(M1READ))
@@ -181,32 +227,32 @@ void clearSerialUntilCommand(){
   //Just read the first char to clear it from the stack
 }
 
-void printDebugToScreen(String line){
-  if (DEBUG_MODE == true){
-    display.clearDisplay();
-    display.setTextSize(1); 
-    display.setTextColor(SSD1306_WHITE);
-    display.setCursor(10, 0);
-    display.println(line);
-    display.display();     
-  }
-}
+// void printDebugToScreen(String line){
+//   if (DEBUG_MODE == true){
+//     display.clearDisplay();
+//     display.setTextSize(1); 
+//     display.setTextColor(SSD1306_WHITE);
+//     display.setCursor(10, 0);
+//     display.println(line);
+//     display.display();     
+//   }
+// }
 
-void printActuatorGoals(){
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(10, 0);
-  display.print(String(commandQueue[currentCommandIndex][1]));
-  display.print(", ");
-  display.print(String(commandQueue[currentCommandIndex][2]));
-  display.print(", ");
-  display.print(String(commandQueue[currentCommandIndex][3]));
-  display.print(", ");
-  display.print(String(commandQueue[currentCommandIndex][4]));
-  display.display(); 
+// void printActuatorGoals(){
+//   display.clearDisplay();
+//   display.setTextSize(1);
+//   display.setTextColor(SSD1306_WHITE);
+//   display.setCursor(10, 0);
+//   display.print(String(commandQueue[currentCommandIndex][1]));
+//   display.print(", ");
+//   display.print(String(commandQueue[currentCommandIndex][2]));
+//   display.print(", ");
+//   display.print(String(commandQueue[currentCommandIndex][3]));
+//   display.print(", ");
+//   display.print(String(commandQueue[currentCommandIndex][4]));
+//   display.display(); 
 
-}
+// }
 
 /** void setHomePositionGoal()
  * sets the first position goal to be the home position of the robot
@@ -360,18 +406,19 @@ unsigned long getMovementTime(){
   int act4Delta = commandQueue[currentCommandIndex][4] - act4.getLen();
   unsigned long maxDelta = max(max(act1Delta,act2Delta),max(act3Delta,act4Delta));
   return maxDelta*((1/(float)MAX_MILLIMETERS_PER_SECOND)*1000)*MOVEMENT_SPEED_SAFETY_FACTOR;
-  //return 4000;
+  //return act1Delta*((1/(float)MAX_MILLIMETERS_PER_SECOND)*1000)*MOVEMENT_SPEED_SAFETY_FACTOR;
+  //return 6000;
 }
 
 
 void setup()
 {
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  //if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     //for(;;); // Don't proceed, loop forever
       // Uncomment this if you're using an I2C screen to debug. 
-  }
+  //}
 
-  printDebugToScreen("Setup Starting");
+  //printDebugToScreen("Setup Starting");
 
   //Begin serial communication so we can connect to the MATLAB script
   Serial.begin(9600);
@@ -392,15 +439,23 @@ void setup()
   // act1.setLen(241);
   // act2.setLen(260);
 
+  pinMode(M1POT, INPUT);
+  pinMode(M2POT, INPUT);
+  pinMode(M3POT, INPUT);
+  pinMode(M4POT, INPUT);
 
 
-  printDebugToScreen("Setup Complete");
 
-  // digitalWrite(M1DIR1, LOW);
-  // digitalWrite(M1DIR2, HIGH);
+  //printDebugToScreen("Setup Complete");
+
+  //digitalWrite(M1ENA, HIGH);
+
+  // digitalWrite(M1PWM2, LOW);
+  // analogWrite(M1PWM1, 255);
 }
 
-//int direction = 0; 
+// int direction = 0; 
+unsigned long lastPrintTime = 0;
 
 void loop()
 {
@@ -413,9 +468,9 @@ void loop()
   bool commandRecieved = readCommand();
   currentTime = millis();
   
-  if(commandRecieved){
-    printDebugToScreen("got a command");
-  }
+  // if(commandRecieved){
+  //   printDebugToScreen("got a command");
+  // }
   
 
   switch(currentState){
@@ -423,7 +478,7 @@ void loop()
       //If we are in this state, all of the commands in the queue have been completed, or we just finished a command
       //To get out, any of the following needs to be true
       //   - We are behind a command (one was added) 
-      printDebugToScreen("In IDLE state");
+      //printDebugToScreen("In IDLE state");
 
       if (newCommandsAvailable()){
         //If we have a new command, find what it is and move to the corresponding state
@@ -453,15 +508,16 @@ void loop()
       }
       }break;
     case COMMAND_MOVING:{
-      printActuatorGoals();
+      //printActuatorGoals();
       delay(1000);
       //We have to move with a move command
+      //Serial.print("Act 1: ");
       int act1Error = abs(act1.moveToPosition(commandQueue[currentCommandIndex][1], movementTime));
       int act2Error = abs(act2.moveToPosition(commandQueue[currentCommandIndex][2], movementTime));
       int act3Error = abs(act3.moveToPosition(commandQueue[currentCommandIndex][3], movementTime));
       int act4Error = abs(act4.moveToPosition(commandQueue[currentCommandIndex][4], movementTime));
       if(max(max(act1Error,act2Error),max(act3Error,act4Error))<=4){
-      //if(act1Error<=4){
+      //if(act2Error<=4){
         //If the maximum error is less than or equal to 4mm, we can say we're finished with the movement
         act1.stop();
         act2.stop();
@@ -469,17 +525,17 @@ void loop()
         act4.stop();
         currentCommandIndex = (currentCommandIndex+1)%MAX_COMMAND_QUEUE_LENGTH;
         currentState = IDLE;
-        printDebugToScreen("Switching to IDLE");
-        delay(1000);
-        printDebugToScreen("Act1 E:" + String(act1.currentEffort));
-        delay(1000);
-        printDebugToScreen("Act2 E:" + String(act2.currentEffort));
-        delay(1000);
-        printDebugToScreen("Act3 E:" + String(act3.currentEffort));
-        delay(1000);
-        printDebugToScreen("Act4 E:" + String(act4.currentEffort));
-        delay(1000);
-      }
+      //   printDebugToScreen("Switching to IDLE");
+      //   delay(1000);
+      //   printDebugToScreen("Act1 E:" + String(act1.currentEffort));
+      //   delay(1000);
+      //   printDebugToScreen("Act2 E:" + String(act2.currentEffort));
+      //   delay(1000);
+      //   printDebugToScreen("Act3 E:" + String(act3.currentEffort));
+      //   delay(1000);
+      //   printDebugToScreen("Act4 E:" + String(act4.currentEffort));
+      //   delay(1000);
+       }
       }break;
     case COMMAND_WAITING:{
       if(currentTime>=waitStartTime+commandQueue[currentCommandIndex][1]){
@@ -495,23 +551,60 @@ void loop()
     
   }
   
+  //BTS7960 testing:-------
+  // int i = 0;
+  // if (direction==1){
+  //   //If we want the ticks to go up, Dir1 = low, Dir2 = high
+  //   for (i = 0; i<=255; i++){
+  //     Serial.println("Duty-cycle: " + String(i) + " | Ticks: " + String(act1.getTicks()));
+  //     digitalWrite(M1PWM1, LOW);
+  //     analogWrite(M1PWM2, i);
+  //     delay(10);
+  //   }
+  //   direction = 0;
+  // } else {
+  //   //If we want the ticks to go down, Dir1 = high, Dir2 = low
+  //   for (i = 0; i<=255; i++){
+  //     Serial.println("Duty-cycle: " + String(i) + " | Ticks: " + String(act1.getTicks()));
+  //     digitalWrite(M1PWM2, LOW);
+  //     analogWrite(M1PWM1, i);
+  //     delay(10);
+  //   }
+  //   direction = 1;
+  // }
+
+  //L298N Testing
   // int i = 0;
   // for (i = 0; i<=255; i++){
-  //   Serial.println("Duty-cycle: " + String(i) + " | Ticks: " + String(act1.getTicks()));
-  //   analogWrite(M1PWM, i);
+  //   Serial.println("Duty-cycle: " + String(i) + " | Ticks: " + String(act4.getTicks()));
+  //   //+ " ISR Count: " + String(isrCalled)
+  //   analogWrite(M4PWM, i);
   //   delay(10);
   // }
   // if (direction==1){
   //       //If we want the ticks to go up, Dir1 = low, Dir2 = high
-  //       digitalWrite(M1DIR1, LOW);
-  //       digitalWrite(M1DIR2, HIGH);
+  //       digitalWrite(M4DIR1, LOW);
+  //       digitalWrite(M4DIR2, HIGH);
   //       direction = 0;
   //   } else {
   //       //If we want the ticks to go down, Dir1 = high, Dir2 = low
-  //       digitalWrite(M1DIR1, HIGH);
-  //       digitalWrite(M1DIR2, LOW);
+  //       digitalWrite(M4DIR1, HIGH);
+  //       digitalWrite(M4DIR2, LOW);
   //       direction = 1;
   //   }
   // i = 0;
+
+  // if (millis()>=lastPrintTime+25){
+  //   Serial.println("Ticks: " + String(act4.getTicks()));
+  //   lastPrintTime = millis();
+  // }
+
+
+  //Pot Min-max calibration:
+  // Serial.print("Act1: " + String(analogRead(M1POT)));
+  // Serial.print(" || Act2: " + String(analogRead(M2POT)));
+  // Serial.print(" || Act3: " + String(analogRead(M3POT)));
+  // Serial.println(" || Act4: " + String(analogRead(M4POT)));
+  // delay(100);
 
 }

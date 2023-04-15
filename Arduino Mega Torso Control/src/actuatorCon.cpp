@@ -3,7 +3,38 @@
 int isrRead;
 
 
-/** actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int pot, int smPotVal, int lrgPotVal)
+/** ****BTS7960**** actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int pot, int smPotVal, int lrgPotVal)
+ * @param interr the encoder pin that needs an interrupt attached
+ * @param read the other encoder pin that doesn't need an interrupt but is read during the ISR
+ * @param pwm the output pin that controls the speed of the actuator
+ * @param dir1 output pin for controlling the actuator direction
+ * @param dir2 output pin for controlling the actuator direction
+ * @param pot the analog pin for reading the potentiometer that tracks the actuation rod position
+ * @param smPotVal the smallest analog read value for the rod. Used for conversion to ticks
+ * @param lrgPotVal the largest analog read value for the rod. Used for conversion to ticks
+ * This constructor declares all the pins as appropriate input or outputs. The ISRs need to be made in the main funciton so they're not here
+ * This also does not set the actuator position from the potentiometers. 
+ *      The setPositionFromPotentiometer() methon must be called for each actuator in the setup function.
+*/
+actuatorCon::actuatorCon(int interr, int read, int PWM1, int PWM2, int pot, int smPotVal, int lrgPotVal)
+{
+    this->interr = interr;
+    this->read = read;
+    this->PWM1 = PWM1;
+    this->PWM2 = PWM2;
+    this->potentiometer = pot;
+    this->smallPotValue = smPotVal;
+    this->largePotValue = lrgPotVal;
+
+
+    pinMode(this->interr, INPUT);
+    pinMode(this->read, INPUT);
+    pinMode(this->PWM1, OUTPUT);
+    pinMode(this->PWM2, OUTPUT);
+    pinMode(this->potentiometer, INPUT);
+}
+
+/** ***L298N*** actuatorCon(int interr, int read, int pwm, int dir1, int dir2, int pot, int smPotVal, int lrgPotVal)
  * @param interr the encoder pin that needs an interrupt attached
  * @param read the other encoder pin that doesn't need an interrupt but is read during the ISR
  * @param pwm the output pin that controls the speed of the actuator
@@ -59,7 +90,7 @@ void actuatorCon::setTicks(int ticks)
 
 unsigned long actuatorCon::getTicks()
 {
-    return motorTicks;
+    return this->motorTicks;
 }
 
 /** void incrementTicks()
@@ -165,11 +196,26 @@ int actuatorCon::moveToPosition(int finalLength, unsigned long actuationTime){
         // Serial.print("| der: ");
         // Serial.print(this->derivativeError);
         // Serial.print("| e: ");
-        // Serial.print(effort);
+        // Serial.println(effort);
     }
 
+    //BTS 7960 stuff:
+    // int pwm = map(constrain(abs((int)effort), 0, 300), 0, 300, 20, 255);
+    // //int pwm = map((int)effort, 0, 500, 0, 255);
+    // //At this point, we're moving the motor according to the defined effort and direction values
+    // if (effort>=0){
+    //     //If we want the ticks to go up, Dir1 = low, Dir2 = high
+    //     digitalWrite(this->PWM2, LOW);
+    //     analogWrite(this->PWM1, pwm);
+    // } else {
+    //     //If we want the ticks to go down, Dir1 = high, Dir2 = low
+    //     digitalWrite(this->PWM1, LOW);
+    //     analogWrite(this->PWM2, pwm);
+    // }
 
-    //At this point, we're moving the motor according to the defined effort and direction values
+    // this->currentEffort = effort;
+    // return finalLength-getLen();
+
     if (effort>=0){
         //If we want the ticks to go up, Dir1 = low, Dir2 = high
         digitalWrite(this->dir1, LOW);
@@ -190,5 +236,9 @@ int actuatorCon::moveToPosition(int finalLength, unsigned long actuationTime){
  * decreases the tick count by one
 */
 void actuatorCon::stop(){
+
+    //BTS7960 Stuff
+    // digitalWrite(this->PWM1, LOW);
+    // digitalWrite(this->PWM2, LOW);
     digitalWrite(this->pwm, LOW);
 }
