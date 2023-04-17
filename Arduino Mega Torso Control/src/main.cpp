@@ -223,6 +223,7 @@ void clearSerialUntilCommand(){
   char nextChar = Serial.peek();
   while (nextChar != 'M' && nextChar != 'G' && Serial.available() > 0){
     Serial.read();
+    nextChar = Serial.peek();
   }
   //Just read the first char to clear it from the stack
 }
@@ -509,7 +510,7 @@ void loop()
       }break;
     case COMMAND_MOVING:{
       //printActuatorGoals();
-      delay(1000);
+      //delay(1000);
       //We have to move with a move command
       //Serial.print("Act 1: ");
       int act1Error = abs(act1.moveToPosition(commandQueue[currentCommandIndex][1], movementTime));

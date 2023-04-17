@@ -250,21 +250,21 @@ while true
 
     if sendDemoCommandFlag == 1
         write(device, "M316316282282", "char");
-        pause(0.25);
+        pause(0.1);
         write(device, "M277312303244", "char");
-        pause(0.25);
+        pause(0.1);
         write(device, "M241241251251", "char");
-        pause(2);
+        pause(0.1);
         write(device, "M276276266266", "char");
-        pause(4);
+        pause(0.1);
         write(device, "M261312266288", "char");
-        pause(3);
+        pause(0.1);
         write(device, "M312261288266", "char");
-        pause(3);
+        pause(0.1);
         write(device, "M320301290274", "char");
-        pause(3);
+        pause(0.1);
         write(device, "M276276266266", "char");
-        pause(3);
+        pause(0.1);
         sendDemoCommandFlag = 0;
         disp("Demo Commands Sent");
     end
